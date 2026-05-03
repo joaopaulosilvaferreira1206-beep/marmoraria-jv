@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { onEstoqueAtualizado } from '../lib/estoqueEvents'
 import { useAuth } from '../lib/AuthContext'
+import logo from '/icon-192.png'
 import {
     LayoutDashboard, Package, ShoppingCart, Users,
     Truck, ArrowDownCircle, AlertTriangle, ClipboardList,
@@ -65,7 +66,7 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
                 <div className="p-6 border-b border-gray-700 flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2">
-                            <img src="/icon-192.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+                            <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
                             <h1 className="text-xl font-bold">Marmoraria JV</h1>
                         </div>
                         <p className="text-gray-400 text-sm mt-1">Gestão de Estoque</p>

@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { Menu, Download } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import logo from '/icon-192.png'
 
 const titulos = {
     '/': 'Dashboard',
@@ -69,7 +70,7 @@ export default function Header({ onMenuClick }) {
                     <p className="text-xs text-gray-400">Gestão de Estoque</p>
                 </div>
                 <div className="w-9 h-9 rounded-full overflow-hidden">
-                    <img src="/icon-192.png" alt="Logo" className="w-full h-full object-cover" />
+                    <img src={logo} alt="Logo" className="w-full h-full object-cover" />
                 </div>
             </div>
         </header>
