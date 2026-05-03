@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+.bg-white {
+    background-color: #1f2937 !important;
+}
+
+.bg-gray-50 {
+    background-color: #374151 !important;
+}
+
+.bg-gray-100 {
+    background-color: #111827 !important;
+}
+
+.border-gray-200,
+.border-gray-300,
+.border-b,
+.border-t {
+    border-color: #4b5563 !important;
+}
+
+.text-gray-800,
+.text-gray-700 {
+    color: #f9fafb !important;
+}
+
+.text-gray-600 {
+    color: #d1d5db !important;
+}
+
+.text-gray-500,
+.text-gray-400 {
+    color: #9ca3af !important;
+}
+
+.hover\:bg-gray-50:hover,
+.hover\:bg-gray-200:hover {
+    background-color: #374151 !important;
+}
+
+table {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+}
+
+thead {
+    background-color: #374151 !important;
+}
+
+th {
+    color: #d1d5db !important;
+    border-color: #4b5563 !important;
+}
+
+td {
+    border-color: #374151 !important;
+    color: #e5e7eb !important;
+}
+
+tr:hover {
+    background-color: #374151 !important;
+}
+
+input,
+select,
+textarea {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+option {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+label {
+    color: #d1d5db !important;
+}
+
+h3,
+h4 {
+    color: #f9fafb !important;
+}
+
+.rounded-xl {
+    background-color: #1f2937 !important;
+}
+
+.shadow-xl {
+    background-color: #1f2937 !important;
+}
+
+select option {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+/* Seta do select */
+select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f9fafb' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 36px !important;
+}
+
+/* Setas dos inputs de número */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    filter: invert(1);
+}
+
+/* Ícone do input de data */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.text-red-400 {
+    color: #f87171 !important;
+}
+
+.text-red-500 {
+    color: #ef4444 !important;
+}
+
+/* Scrollbar moderna */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
