@@ -84,6 +84,14 @@ export default function Usuarios() {
     }
 
     async function handleAlterarPerfil(usuario, novoPerfil) {
+        const nomeNovoPerfil = novoPerfil === 'admin' ? 'Administrador' : 'Operador'
+        const confirmado = await confirm(
+            `Deseja alterar o perfil de "${usuario.nome}" para ${nomeNovoPerfil}?`
+        )
+        if (!confirmado) {
+            carregarUsuarios()
+            return
+        }
         await supabase.from('perfis').update({ perfil: novoPerfil }).eq('id', usuario.id)
         carregarUsuarios()
     }
@@ -196,31 +204,33 @@ export default function Usuarios() {
                 ) : (
                     <div className="divide-y divide-gray-700">
                         {usuarios.map(usuario => (
-                            <div key={usuario.id} className="flex items-center gap-4 px-4 py-3">
-                                <div className={`p-2 rounded-full ${usuario.perfil === 'admin' ? 'bg-blue-600/20' : 'bg-gray-700'}`}>
+                            <div key={usuario.id} className="flex items-center gap-3 px-4 py-3">
+                                <div className={`p-2 rounded-full shrink-0 ${usuario.perfil === 'admin' ? 'bg-blue-600/20' : 'bg-gray-700'}`}>
                                     {usuario.perfil === 'admin'
                                         ? <Shield size={18} className="text-blue-400" />
                                         : <User size={18} className="text-gray-400" />
                                     }
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-gray-100 font-medium">{usuario.nome}</p>
-                                    <p className="text-gray-400 text-sm">{usuario.email}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-gray-100 font-medium truncate">{usuario.nome}</p>
+                                    <p className="text-gray-400 text-sm truncate">{usuario.email}</p>
                                 </div>
-                                <select
-                                    value={usuario.perfil}
-                                    onChange={e => handleAlterarPerfil(usuario, e.target.value)}
-                                    className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
-                                >
-                                    <option value="operador">Operador</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                                <button
-                                    onClick={() => handleRemover(usuario)}
-                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <select
+                                        value={usuario.perfil}
+                                        onChange={e => handleAlterarPerfil(usuario, e.target.value)}
+                                        className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                                    >
+                                        <option value="operador">Operador</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                    <button
+                                        onClick={() => handleRemover(usuario)}
+                                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
