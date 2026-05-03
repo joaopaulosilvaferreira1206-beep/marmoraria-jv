@@ -13,7 +13,11 @@ export default function Dashboard() {
     const [vendasRecentes, setVendasRecentes] = useState([])
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => { carregarDados() }, [])
+    useEffect(() => {
+        carregarDados()
+        const intervalo = setInterval(carregarDados, 20000)
+        return () => clearInterval(intervalo)
+    }, [])
 
     async function carregarDados() {
         setLoading(true)

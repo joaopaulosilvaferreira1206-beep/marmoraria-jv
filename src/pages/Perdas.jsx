@@ -20,7 +20,11 @@ export default function Perdas() {
     const [modal, setModal] = useState(false)
     const [form, setForm] = useState(perdaVazia)
 
-    useEffect(() => { carregarDados() }, [])
+    useEffect(() => {
+        carregarDados()
+        const intervalo = setInterval(carregarDados, 20000)
+        return () => clearInterval(intervalo)
+    }, [])
 
     async function carregarDados() {
         setLoading(true)

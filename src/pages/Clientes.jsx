@@ -27,7 +27,9 @@ export default function Clientes() {
     const [busca, setBusca] = useState('')
 
     useEffect(() => {
-        carregarClientes()
+        carregarDados()
+        const intervalo = setInterval(carregarDados, 20000)
+        return () => clearInterval(intervalo)
     }, [])
 
     async function carregarClientes() {
@@ -237,7 +239,7 @@ export default function Clientes() {
                             <div>
                                 <label className="text-sm text-gray-300">Nome *</label>
                                 <input type="text" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })}
-                                    className="w-full border border-gray-600 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                    className="w-full border border-gray-600 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Nome do cliente" autoFocus />
                             </div>
                             <div>

@@ -21,7 +21,9 @@ export default function Fornecedores() {
     const [editando, setEditando] = useState(null)
 
     useEffect(() => {
-        carregarFornecedores()
+        carregarDados()
+        const intervalo = setInterval(carregarDados, 20000)
+        return () => clearInterval(intervalo)
     }, [])
 
     async function carregarFornecedores() {

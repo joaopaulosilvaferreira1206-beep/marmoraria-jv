@@ -27,7 +27,11 @@ export default function Estoque() {
     const [uploading, setUploading] = useState(false)
     const [modalImagem, setModalImagem] = useState(null)
 
-    useEffect(() => { carregarMateriais() }, [])
+    useEffect(() => {
+        carregarMateriais()
+        const intervalo = setInterval(carregarMateriais, 20000)
+        return () => clearInterval(intervalo)
+    }, [])
 
     async function carregarMateriais() {
         setLoading(true)
@@ -139,7 +143,7 @@ export default function Estoque() {
             imagem_url: m.imagem_url || null,
             custo: m.valor_medio ?? '',
         })
-        
+
         setImagemPreview(m.imagem_url || null)
         setImagemFile(null)
         setEditando(m.id)

@@ -29,7 +29,11 @@ export default function Pedidos() {
     const [itens, setItens] = useState([])
     const [itemForm, setItemForm] = useState({ material_id: '', quantidade: '' })
 
-    useEffect(() => { carregarDados() }, [])
+    useEffect(() => {
+        carregarDados()
+        const intervalo = setInterval(carregarDados, 20000)
+        return () => clearInterval(intervalo)
+    }, [])
 
     async function carregarDados() {
         setLoading(true)
