@@ -91,11 +91,11 @@ export default function Fornecedores() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Nome</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Telefone</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Email</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Endereço</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Ações</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Nome</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Telefone</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Email</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Endereço</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -105,12 +105,12 @@ export default function Fornecedores() {
                             <tr><td colSpan={5} className="text-center py-8 text-gray-400">Nenhum fornecedor cadastrado.</td></tr>
                         ) : fornecedores.map(f => (
                             <tr key={f.id} className="border-b border-gray-700 hover:bg-gray-700">
-                                <td className="px-4 py-3 font-medium text-white">{f.nome}</td>
-                                <td className="px-4 py-3 text-gray-400">{f.telefone || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{f.email || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{f.endereco || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{f.nome}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{f.telefone || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{f.email || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{f.endereco || '—'}</td>
                                 <td className="px-4 py-3">
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 justify-center">
                                         <button onClick={() => abrirEditar(f)} className="text-blue-400 hover:text-blue-300">
                                             <Pencil size={16} />
                                         </button>

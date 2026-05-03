@@ -35,7 +35,7 @@ export default function Vendas() {
     async function carregarDados() {
         setLoading(true)
         const [{ data: v }, { data: c }, { data: m }, { data: iv }] = await Promise.all([
-            supabase.from('vendas').select('*, clientes(nome)').order('data', { ascending: false }),
+            supabase.from('vendas').select('*, clientes(nome), itens_venda(quantidade, materiais(descricao))').order('data', { ascending: false }),
             supabase.from('clientes').select('id, nome').order('nome'),
             supabase.from('materiais').select('id, sku, descricao, saldo, valor_medio, saidas, valor_total').order('descricao'),
             supabase.from('itens_venda').select('venda_id, quantidade'),
@@ -186,29 +186,41 @@ export default function Vendas() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Data/Hora</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Cliente</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Tipo de Trabalho</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Qtd. Material</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Pagamento</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Valor Total</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Observação</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Data/Hora</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Cliente</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Tipo de Trabalho</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Materiais</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Qtd. Material</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Pagamento</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Valor Total</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Observação</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
+                            <tr><td colSpan={8} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : vendas.length === 0 ? (
-                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Nenhuma venda registrada.</td></tr>
+                            <tr><td colSpan={8} className="text-center py-8 text-gray-400">Nenhuma venda registrada.</td></tr>
                         ) : vendas.map(v => (
                             <tr key={v.id} className="border-b border-gray-700 hover:bg-gray-700">
                                 <td className="px-4 py-3 text-gray-400">{formatarDataHora(v)}</td>
-                                <td className="px-4 py-3 font-medium text-white">{v.clientes?.nome || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{v.tipo_trabalho || '—'}</td>
-                                <td className="px-4 py-3 text-blue-400 font-bold">{(quantidadePorVenda[v.id] || 0).toLocaleString('pt-BR')} m²</td>
-                                <td className="px-4 py-3 text-gray-400">{v.forma_pagamento || '—'}</td>
-                                <td className="px-4 py-3 text-green-400 font-bold">R$ {(v.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3 text-gray-400">{v.observacao || '—'}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{v.clientes?.nome || '—'}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{v.tipo_trabalho || '—'}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">
+                                    {(v.itens_venda || []).length === 0 ? '—' : (
+                                        <div className="flex flex-col gap-1">
+                                            {v.itens_venda.map((item, i) => (
+                                                <span key={i} className="text-xs">
+                                                    {item.materiais?.descricao}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{(quantidadePorVenda[v.id] || 0).toLocaleString('pt-BR')} m²</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{v.forma_pagamento || '—'}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">R$ {(v.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{v.observacao || '—'}</td>
                             </tr>
                         ))}
                     </tbody>

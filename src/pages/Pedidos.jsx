@@ -34,7 +34,7 @@ export default function Pedidos() {
     async function carregarDados() {
         setLoading(true)
         const [{ data: ped, error: pedError }, { data: forn, error: fornError }, { data: mat, error: matError }] = await Promise.all([
-            supabase.from('pedidos').select('*, fornecedores(nome), itens_pedido(quantidade)').order('data', { ascending: false }),
+            supabase.from('pedidos').select('*, fornecedores(nome), itens_pedido(quantidade, materiais(descricao))').order('data', { ascending: false }),
             supabase.from('fornecedores').select('id, nome').order('nome'),
             supabase.from('materiais').select('id, sku, descricao, unidade').order('descricao'),
         ])
@@ -213,34 +213,46 @@ export default function Pedidos() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Data/Hora</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Fornecedor</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Qtd. Requerida</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Status</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Observação</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Tempo de Entrega</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Ações</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Data/Hora</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Fornecedor</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Materiais</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Qtd. Requerida</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Status</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Observação</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Tempo de Entrega</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={6} className="text-center py-8 text-gray-400">Carregando...</td></tr>
+                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : pedidos.length === 0 ? (
-                            <tr><td colSpan={6} className="text-center py-8 text-gray-400">Nenhum pedido registrado.</td></tr>
+                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Nenhum pedido registrado.</td></tr>
                         ) : pedidos.map(p => (
                             <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700">
-                                <td className="px-4 py-3 text-gray-400">{formatarDataHora(p)}</td>
-                                <td className="px-4 py-3 font-medium text-white">{p.fornecedores?.nome || '—'}</td>
-                                <td className="px-4 py-3 text-blue-400 font-bold">{(quantidadePorPedido[p.id] || 0).toLocaleString('pt-BR')} m²</td>
-                                <td className="px-4 py-3">
+                                <td className="px-4 py-3 text-center text-gray-400">{formatarDataHora(p)}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{p.fornecedores?.nome || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">
+                                    {(p.itens_pedido || []).length === 0 ? '—' : (
+                                        <div className="flex flex-col gap-1">
+                                            {p.itens_pedido.map((item, i) => (
+                                                <span key={i} className="text-xs">
+                                                    {item.materiais?.descricao}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-center text-gray-400">{(quantidadePorPedido[p.id] || 0).toLocaleString('pt-BR')} m²</td>
+                                <td className="px-4 py-3 text-center">
                                     <span className={`px-2 py-1 rounded text-xs font-semibold ${statusClass(p.status)}`}>
                                         {p.status || 'Pendente'}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-gray-400">{p.observacao || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{p.tempo_entrega || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{p.observacao || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{p.tempo_entrega || '—'}</td>
                                 <td className="px-4 py-3">
-                                    <div className="flex gap-2 flex-wrap">
+                                    <div className="flex gap-2 flex- justify-center">
                                         {p.status !== 'Recebido' && p.status !== 'Cancelado' && (
                                             <>
                                                 <button onClick={() => alterarStatus(p, 'Recebido')}

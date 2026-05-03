@@ -10,6 +10,7 @@ const materialVazio = {
     minimo: '',
     maximo: '',
     unidade: 'M²',
+    custo: '',
 }
 
 export default function Estoque() {
@@ -75,6 +76,7 @@ export default function Estoque() {
                 maximo: Number(form.maximo) || 0,
                 unidade: form.unidade,
                 imagem_url: imagemUrl,
+                valor_medio: Number(form.custo) || 0,
             }).eq('id', editando)
         } else {
             const { data: ultimo } = await supabase
@@ -89,7 +91,7 @@ export default function Estoque() {
             await supabase.from('materiais').insert({
                 sku: novoCodigo,
                 descricao: form.descricao,
-                valor_medio: 0,
+                valor_medio: Number(form.custo) || 0,
                 minimo: Number(form.minimo) || 0,
                 maximo: Number(form.maximo) || 0,
                 unidade: form.unidade,
@@ -131,11 +133,13 @@ export default function Estoque() {
     function abrirEditar(m) {
         setForm({
             descricao: m.descricao,
-            minimo: m.minimo,
-            maximo: m.maximo,
-            unidade: m.unidade,
-            imagem_url: m.imagem_url,
+            minimo: m.minimo ?? '',
+            maximo: m.maximo ?? '',
+            unidade: m.unidade || 'M²',
+            imagem_url: m.imagem_url || null,
+            custo: m.valor_medio ?? '',
         })
+        
         setImagemPreview(m.imagem_url || null)
         setImagemFile(null)
         setEditando(m.id)
@@ -171,26 +175,25 @@ export default function Estoque() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Foto</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Código</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Descrição</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Saldo</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Mín.</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Máx.</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Valor Médio</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Valor Total</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Unidade</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Ações</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Foto</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Código</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Descrição</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Saldo</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Mín.</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Máx.</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Custo Unit.</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Unidade</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={10} className="text-center py-8 text-gray-400">Carregando...</td></tr>
+                            <tr><td colSpan={9} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : filtrados.length === 0 ? (
-                            <tr><td colSpan={10} className="text-center py-8 text-gray-400">Nenhum material encontrado.</td></tr>
+                            <tr><td colSpan={9} className="text-center py-8 text-gray-400">Nenhum material encontrado.</td></tr>
                         ) : filtrados.map(m => (
                             <tr key={m.id} className="border-b border-gray-700 hover:bg-gray-700">
-                                <td className="px-4 py-3">
+                                <td className="px-4 py-3 flex justify-center">
                                     {m.imagem_url ? (
                                         <img
                                             src={m.imagem_url}
@@ -204,18 +207,17 @@ export default function Estoque() {
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-4 py-3 text-gray-400">{m.sku}</td>
-                                <td className="px-4 py-3 font-medium text-gray-100">{m.descricao}</td>
-                                <td className={`px-4 py-3 font-bold ${m.minimo && m.saldo <= m.minimo ? 'text-red-400' : 'text-gray-100'}`}>
+                                <td className="px-4 py-3 text-center text-gray-400">{m.sku}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{m.descricao}</td>
+                                <td className={`px-4 py-3 font-bold text-center ${m.minimo && m.saldo <= m.minimo ? 'text-red-400' : 'text-gray-400'}`}>
                                     {m.saldo ?? 0}
                                 </td>
-                                <td className="px-4 py-3 text-gray-400">{m.minimo ?? '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{m.maximo ?? '—'}</td>
-                                <td className="px-4 py-3 text-gray-300">R$ {(m.valor_medio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3 text-gray-300">R$ {(m.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3 text-gray-400">{m.unidade}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{m.minimo ?? '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{m.maximo ?? '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">R$ {(m.valor_medio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="px-4 py-3 text-gray-400 text-center">{m.unidade}</td>
                                 <td className="px-4 py-3">
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 justify-center">
                                         <button onClick={() => abrirEditar(m)} className="text-blue-400 hover:text-blue-300">
                                             <Pencil size={16} />
                                         </button>
@@ -257,6 +259,12 @@ export default function Estoque() {
                                     <input type="number" value={form.maximo} onChange={e => setForm({ ...form, maximo: e.target.value })}
                                         className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500" />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-300">Custo Unitário (R$)</label>
+                                <input type="number" value={form.custo} onChange={e => setForm({ ...form, custo: e.target.value })}
+                                    className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500"
+                                    placeholder="0.00" />
                             </div>
                             <div>
                                 <label className="text-sm text-gray-300">Unidade</label>

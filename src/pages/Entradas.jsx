@@ -223,13 +223,13 @@ export default function Entradas() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Data/Hora</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Material</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Fornecedor</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Quantidade</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Custo Unit.</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Total</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Observação</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Data/Hora</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Material</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Fornecedor</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Quantidade</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Custo Unit.</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Total</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Observação</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -240,12 +240,12 @@ export default function Entradas() {
                         ) : entradas.map(e => (
                             <tr key={e.id} className="border-b border-gray-700 hover:bg-gray-700">
                                 <td className="px-4 py-3 text-gray-400">{formatarDataHora(e)}</td>
-                                <td className="px-4 py-3 font-medium text-white">{e.materiais?.descricao || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{e.fornecedores?.nome || '—'}</td>
-                                <td className="px-4 py-3 text-blue-400 font-bold">+{e.quantidade} m²</td>
-                                <td className="px-4 py-3 text-gray-300">R$ {(e.custo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3 text-gray-300">R$ {((e.custo || 0) * e.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3 text-gray-400">{e.observacao || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{e.materiais?.descricao || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{e.fornecedores?.nome || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">+{e.quantidade} m²</td>
+                                <td className="px-4 py-3 text-center text-gray-400">R$ {(e.custo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">R$ {((e.custo || 0) * e.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{e.observacao || '—'}</td>
                             </tr>
                         ))}
                     </tbody>

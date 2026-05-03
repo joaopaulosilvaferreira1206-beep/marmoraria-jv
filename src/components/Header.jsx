@@ -68,8 +68,8 @@ export default function Header({ onMenuClick }) {
                     <p className="text-sm font-medium text-gray-200">Marmoraria JV</p>
                     <p className="text-xs text-gray-400">Gestão de Estoque</p>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                    M
+                <div className="w-9 h-9 rounded-full overflow-hidden">
+                    <img src="/icon-192.png" alt="Logo" className="w-full h-full object-cover" />
                 </div>
             </div>
         </header>

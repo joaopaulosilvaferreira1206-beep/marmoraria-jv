@@ -61,10 +61,13 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
         transform transition-transform duration-300 ease-in-out
         ${aberta ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
-      `}>
+`}>
                 <div className="p-6 border-b border-gray-700 flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold">💎 Marmoraria JV</h1>
+                        <div className="flex items-center gap-2">
+                            <img src="/icon-192.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+                            <h1 className="text-xl font-bold">Marmoraria JV</h1>
+                        </div>
                         <p className="text-gray-400 text-sm mt-1">Gestão de Estoque</p>
                     </div>
                     <button

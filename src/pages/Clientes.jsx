@@ -119,11 +119,11 @@ export default function Clientes() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Nome</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Telefone</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Email</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Endereço</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Ações</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Nome</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Telefone</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Email</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Endereço</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,12 +133,12 @@ export default function Clientes() {
                             <tr><td colSpan={5} className="text-center py-8 text-gray-400">Nenhum cliente encontrado.</td></tr>
                         ) : filtrados.map(c => (
                             <tr key={c.id} className="border-b border-gray-700 hover:bg-gray-700">
-                                <td className="px-4 py-3 font-medium text-gray-100">{c.nome}</td>
-                                <td className="px-4 py-3 text-gray-400">{c.telefone || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{c.email || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{c.endereco || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{c.nome}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{c.telefone || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{c.email || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{c.endereco || '—'}</td>
                                 <td className="px-4 py-3">
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 justify-center">
                                         <button onClick={() => abrirHistorico(c)} className="text-purple-400 hover:text-purple-300" title="Ver histórico">
                                             <History size={16} />
                                         </button>

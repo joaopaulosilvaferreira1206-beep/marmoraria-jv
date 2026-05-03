@@ -102,10 +102,10 @@ export default function Perdas() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Data/Hora</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Material</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Quantidade</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Motivo</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Data/Hora</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Material</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Quantidade</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Motivo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,9 +116,9 @@ export default function Perdas() {
                         ) : perdas.map(p => (
                             <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700">
                                 <td className="px-4 py-3 text-gray-400">{formatarDataHora(p)}</td>
-                                <td className="px-4 py-3 font-medium text-white">{p.materiais?.descricao || '—'}</td>
-                                <td className="px-4 py-3 text-red-400 font-bold">-{p.quantidade} m²</td>
-                                <td className="px-4 py-3 text-gray-400">{p.motivo || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{p.materiais?.descricao || '—'}</td>
+                                <td className="px-4 py-3 text-center text-red-400 font-bold">-{p.quantidade} m²</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{p.motivo || '—'}</td>
                             </tr>
                         ))}
                     </tbody>

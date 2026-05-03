@@ -38,7 +38,7 @@ export default function Orcamentos() {
     async function carregarDados() {
         setLoading(true)
         const [{ data: o }, { data: c }, { data: m }] = await Promise.all([
-            supabase.from('orcamentos').select('*, clientes(nome)').order('criado_em', { ascending: false }),
+            supabase.from('orcamentos').select('*, clientes(nome), itens_orcamento(quantidade, materiais(descricao))').order('criado_em', { ascending: false }),
             supabase.from('clientes').select('id, nome').order('nome'),
             supabase.from('materiais').select('id, sku, descricao, saldo, valor_medio').order('descricao'),
         ])
@@ -186,34 +186,50 @@ export default function Orcamentos() {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
-                            <th className="text-left px-4 py-3 text-gray-300">Data</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Cliente</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Tipo de Trabalho</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Validade</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Valor Total</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Status</th>
-                            <th className="text-left px-4 py-3 text-gray-300">Ações</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Data</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Cliente</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Tipo de Trabalho</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Materiais</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Qtd. Total</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Validade</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Valor Total</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Status</th>
+                            <th className="text-center px-4 py-3 text-gray-300">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
+                            <tr><td colSpan={9} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : orcamentos.length === 0 ? (
-                            <tr><td colSpan={7} className="text-center py-8 text-gray-400">Nenhum orçamento registrado.</td></tr>
+                            <tr><td colSpan={9} className="text-center py-8 text-gray-400">Nenhum orçamento registrado.</td></tr>
                         ) : orcamentos.map(o => (
                             <tr key={o.id} className="border-b border-gray-700 hover:bg-gray-700">
-                                <td className="px-4 py-3 text-gray-400">{new Date(o.data).toLocaleDateString('pt-BR')}</td>
-                                <td className="px-4 py-3 font-medium text-white">{o.clientes?.nome || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{o.tipo_trabalho || '—'}</td>
-                                <td className="px-4 py-3 text-gray-400">{o.validade ? new Date(o.validade).toLocaleDateString('pt-BR') : '—'}</td>
-                                <td className="px-4 py-3 text-green-400 font-bold">R$ {(o.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                <td className="px-4 py-3">
+                                <td className="px-4 py-3 text-center text-gray-400">{new Date(o.data).toLocaleDateString('pt-BR')}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{o.clientes?.nome || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">{o.tipo_trabalho || '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">
+                                    {(o.itens_orcamento || []).length === 0 ? '—' : (
+                                        <div className="flex flex-col gap-1">
+                                            {o.itens_orcamento.map((item, i) => (
+                                                <span key={i} className="text-xs">
+                                                    {item.materiais?.descricao}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-center text-gray-400">
+                                    {(o.itens_orcamento || []).reduce((acc, item) => acc + Number(item.quantidade || 0), 0).toLocaleString('pt-BR')} m²
+                                </td>
+                                <td className="px-4 py-3 text-center text-gray-400">{o.validade ? new Date(o.validade).toLocaleDateString('pt-BR') : '—'}</td>
+                                <td className="px-4 py-3 text-center text-gray-400">R$ {(o.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="px-4 py-3 text-center">
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusCores[o.status] || statusCores.pendente}`}>
                                         {o.status}
                                     </span>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <div className="flex gap-2 flex-wrap">
+                                    <div className="flex gap-2 flex-wrap justify-center">
                                         {o.status === 'pendente' && (
                                             <>
                                                 <button onClick={() => atualizarStatus(o.id, 'aprovado')}
@@ -287,8 +303,6 @@ export default function Orcamentos() {
                                         placeholder="Selecione ou digite..."
                                     />
                                 </div>
-                            </div>
-                            <div>
                                 <label className="text-sm text-gray-400">Forma de Pagamento</label>
                                 <div className="mt-1">
                                     <SelectOuDigita
