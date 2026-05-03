@@ -73,30 +73,40 @@ export default function Relatorios() {
     }
 
     return (
-        
+
         <div className="space-y-6">
             {/* Filtro de período */}
             <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
                 <h3 className="text-gray-100 font-semibold mb-4">Selecione o Período</h3>
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                    <div>
-                        <label className="text-sm text-gray-300">Data Início</label>
-                        <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-                            className="w-full border border-gray-600 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 items-start">
+                        <div className="flex flex-col">
+                            <label className="text-sm text-gray-300 mb-1.5">Data Início</label>
+                            <input
+                                type="date"
+                                value={dataInicio}
+                                onChange={e => setDataInicio(e.target.value)}
+                                className="w-44 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm text-gray-300 mb-1.5">Data Fim</label>
+                            <input
+                                type="date"
+                                value={dataFim}
+                                onChange={e => setDataFim(e.target.value)}
+                                className="w-44 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 -mb-3"
+                            />
+                        </div>
+                        <button
+                            onClick={gerarRelatorio}
+                            disabled={loading}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 mt-7"
+                        >
+                            <Search size={18} />
+                            {loading ? 'Gerando...' : 'Gerar Relatório'}
+                        </button>
                     </div>
-                    <div>
-                        <label className="text-sm text-gray-300">Data Fim</label>
-                        <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
-                            className="w-full border border-gray-600 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <button
-                        onClick={gerarRelatorio}
-                        disabled={loading}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                    >
-                        <Search size={18} />
-                        {loading ? 'Gerando...' : 'Gerar Relatório'}
-                    </button>
 
                     {relatorio && (
                         <div className="flex gap-3">

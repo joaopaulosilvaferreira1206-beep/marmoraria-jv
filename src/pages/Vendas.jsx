@@ -224,11 +224,11 @@ export default function Vendas() {
                             <button onClick={() => setModal(false)} className="text-gray-400 hover:text-gray-200"><X size={20} /></button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                            <div className="sm:col-span-1">
                                 <label className="text-sm text-gray-400">Cliente *</label>
                                 <div className="mt-1 flex gap-2">
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <SelectBusca
                                             opcoes={clientes}
                                             valor={form.cliente_id}
@@ -400,7 +400,7 @@ export default function Vendas() {
 
             {/* Modal Novo Cliente */}
             {modalCliente && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
                     <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Novo Cliente</h3>

@@ -250,11 +250,11 @@ export default function Orcamentos() {
                             <button onClick={() => setModal(false)} className="text-gray-400 hover:text-gray-200"><X size={20} /></button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                            <div className="sm:col-span-1">
                                 <label className="text-sm text-gray-400">Cliente *</label>
                                 <div className="mt-1 flex gap-2">
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <SelectBusca
                                             opcoes={clientes}
                                             valor={form.cliente_id}
@@ -289,9 +289,15 @@ export default function Orcamentos() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-sm text-gray-400">Validade do Orçamento</label>
-                                <input type="date" value={form.validade} onChange={e => setForm({ ...form, validade: e.target.value })}
-                                    className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500" />
+                                <label className="text-sm text-gray-400">Forma de Pagamento</label>
+                                <div className="mt-1">
+                                    <SelectOuDigita
+                                        opcoes={['Dinheiro', 'PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'A prazo']}
+                                        valor={form.forma_pagamento}
+                                        onChange={v => setForm({ ...form, forma_pagamento: v })}
+                                        placeholder="Selecione ou digite..."
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -418,7 +424,7 @@ export default function Orcamentos() {
 
             {/* Modal Novo Cliente */}
             {modalCliente && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
                     <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Novo Cliente</h3>

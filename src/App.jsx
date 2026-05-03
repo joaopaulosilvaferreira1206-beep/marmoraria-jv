@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './lib/AuthContext'
 import { gerarBackup } from './lib/backup'
 import Sidebar from './components/Sidebar'
@@ -21,13 +21,18 @@ import Usuarios from './pages/Usuarios'
 
 function Layout({ onLogout }) {
   const { pode } = useAuth()
+  const [sidebarAberta, setSidebarAberta] = useState(false)
 
   return (
-    <div className="flex h-screen bg-gray-900">
-      <Sidebar onLogout={onLogout} />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-900">
+    <div className="flex h-screen bg-gray-900 overflow-hidden">
+      <Sidebar
+        onLogout={onLogout}
+        aberta={sidebarAberta}
+        onFechar={() => setSidebarAberta(false)}
+      />
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <Header onMenuClick={() => setSidebarAberta(true)} />
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-900">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/estoque" element={<Estoque />} />
@@ -57,7 +62,6 @@ function Layout({ onLogout }) {
 function App() {
   const { sessao, loading, logout } = useAuth()
 
-  // Backup automático
   useEffect(() => {
     if (!sessao) return
     if (!window.electronAPI) return
@@ -74,9 +78,7 @@ function App() {
     )
   }
 
-  if (!sessao) {
-    return <Login />
-  }
+  if (!sessao) return <Login />
 
   return (
     <PopupProvider>
