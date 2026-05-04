@@ -32,9 +32,18 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
 
     useEffect(() => {
         verificarEstoque()
-        const interval = setInterval(verificarEstoque, 60000)
+        const interval = setInterval(verificarEstoque, 5000)
         const remover = onEstoqueAtualizado(verificarEstoque)
-        return () => { clearInterval(interval); remover() }
+
+        const canal = supabase.channel('sidebar-estoque')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'materiais' }, verificarEstoque)
+            .subscribe()
+
+        return () => {
+            clearInterval(interval)
+            remover()
+            supabase.removeChannel(canal)
+        }
     }, [])
 
     async function verificarEstoque() {

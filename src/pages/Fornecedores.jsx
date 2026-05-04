@@ -21,9 +21,12 @@ export default function Fornecedores() {
     const [editando, setEditando] = useState(null)
 
     useEffect(() => {
-        carregarDados()
-        const intervalo = setInterval(carregarDados, 20000)
-        return () => clearInterval(intervalo)
+        carregarFornecedores()
+        const intervalo = setInterval(carregarFornecedores, 20000)
+        const canal = supabase.channel('fornecedores-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'fornecedores' }, carregarFornecedores)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
 
     async function carregarFornecedores() {

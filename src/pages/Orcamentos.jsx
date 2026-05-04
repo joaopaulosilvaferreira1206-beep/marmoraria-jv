@@ -36,7 +36,10 @@ export default function Orcamentos() {
     useEffect(() => {
         carregarDados()
         const intervalo = setInterval(carregarDados, 20000)
-        return () => clearInterval(intervalo)
+        const canal = supabase.channel('orcamentos-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orcamentos' }, carregarDados)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
 
     async function carregarDados() {

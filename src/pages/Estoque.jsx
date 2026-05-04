@@ -30,7 +30,10 @@ export default function Estoque() {
     useEffect(() => {
         carregarMateriais()
         const intervalo = setInterval(carregarMateriais, 20000)
-        return () => clearInterval(intervalo)
+        const canal = supabase.channel('estoque-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'materiais' }, carregarMateriais)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
 
     async function carregarMateriais() {

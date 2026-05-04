@@ -27,9 +27,12 @@ export default function Clientes() {
     const [busca, setBusca] = useState('')
 
     useEffect(() => {
-        carregarDados()
-        const intervalo = setInterval(carregarDados, 20000)
-        return () => clearInterval(intervalo)
+        carregarClientes()
+        const intervalo = setInterval(carregarClientes, 20000)
+        const canal = supabase.channel('clientes-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, carregarClientes)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
 
     async function carregarClientes() {

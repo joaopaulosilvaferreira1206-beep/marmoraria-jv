@@ -16,9 +16,13 @@ export default function Dashboard() {
     useEffect(() => {
         carregarDados()
         const intervalo = setInterval(carregarDados, 20000)
-        return () => clearInterval(intervalo)
+        const canal = supabase.channel('dashboard-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'materiais' }, carregarDados)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas' }, carregarDados)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'perdas' }, carregarDados)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
-
     async function carregarDados() {
         setLoading(true)
         const { data: materiais } = await supabase.from('materiais').select('*')

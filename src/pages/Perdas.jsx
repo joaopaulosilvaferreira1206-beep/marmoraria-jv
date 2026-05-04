@@ -23,7 +23,10 @@ export default function Perdas() {
     useEffect(() => {
         carregarDados()
         const intervalo = setInterval(carregarDados, 20000)
-        return () => clearInterval(intervalo)
+        const canal = supabase.channel('perdas-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'perdas' }, carregarDados)
+            .subscribe()
+        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
     }, [])
 
     async function carregarDados() {
