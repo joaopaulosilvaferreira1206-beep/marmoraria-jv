@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
 import { useAuth } from "../lib/AuthContext";
+import { useBusca } from "../lib/buscaContext";
 
 const fornecedorVazio = {
   nome: "",
@@ -19,6 +20,16 @@ export default function Fornecedores() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(fornecedorVazio);
   const [editando, setEditando] = useState(null);
+  const { itemDestacado } = useBusca();
+  const rowRefs = useRef({});
+
+  // Scroll automático até o item destacado
+  useEffect(() => {
+    if (itemDestacado?.tabela === "fornecedores" && itemDestacado?.id) {
+      const el = rowRefs.current[itemDestacado.id];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [itemDestacado]);
 
   useEffect(() => {
     carregarFornecedores();
@@ -48,13 +59,11 @@ export default function Fornecedores() {
       await popup.showWarning("Preencha o nome do fornecedor!");
       return;
     }
-
     if (editando) {
       await supabase.from("fornecedores").update(form).eq("id", editando);
     } else {
       await supabase.from("fornecedores").insert(form);
     }
-
     setModal(false);
     setForm(fornecedorVazio);
     setEditando(null);
@@ -67,7 +76,6 @@ export default function Fornecedores() {
     );
     if (!confirmado) return;
 
-    // Remove itens dos pedidos do fornecedor
     const { data: pedidos } = await supabase
       .from("pedidos")
       .select("id")
@@ -79,16 +87,13 @@ export default function Fornecedores() {
       await supabase.from("pedidos").delete().eq("fornecedor_id", id);
     }
 
-    // Remove entradas do fornecedor
     await supabase.from("entradas").delete().eq("fornecedor_id", id);
 
-    // Remove o fornecedor
     const { error } = await supabase.from("fornecedores").delete().eq("id", id);
     if (error) {
       popup.showError("Erro ao excluir fornecedor: " + error.message);
       return;
     }
-
     popup.showSuccess(
       "Fornecedor e todos os registros relacionados foram excluídos!",
     );
@@ -147,43 +152,55 @@ export default function Fornecedores() {
                 </td>
               </tr>
             ) : (
-              fornecedores.map((f) => (
-                <tr
-                  key={f.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {f.nome}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {f.telefone || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {f.email || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {f.endereco || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => abrirEditar(f)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      {pode.apagarRegistros && (
+              fornecedores.map((f) => {
+                const destacado =
+                  itemDestacado?.tabela === "fornecedores" &&
+                  itemDestacado?.id === f.id;
+                return (
+                  <tr
+                    key={f.id}
+                    ref={(el) => (rowRefs.current[f.id] = el)}
+                    className={`border-b border-gray-700 transition-all duration-500 ${
+                      destacado
+                        ? "bg-gray-500/20 ring-2 ring-inset ring-gray-500/60"
+                        : "hover:bg-gray-700"
+                    }`}
+                  >
+                    <td
+                      className={`px-4 py-3 text-center font-medium ${destacado ? "text-yellow-200" : "text-gray-400"}`}
+                    >
+                      {f.nome}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {f.telefone || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {f.email || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {f.endereco || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() => excluir(f.id)}
-                          className="text-red-400 hover:text-red-300"
+                          onClick={() => abrirEditar(f)}
+                          className="text-blue-400 hover:text-blue-300"
                         >
-                          <Trash2 size={16} />
+                          <Pencil size={16} />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {pode.apagarRegistros && (
+                          <button
+                            onClick={() => excluir(f.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

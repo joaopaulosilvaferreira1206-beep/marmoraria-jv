@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { Plus, Pencil, Trash2, X, History } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
 import { exportarClientesPDF, exportarClientesExcel } from "../lib/exportar";
 import { useAuth } from "../lib/AuthContext";
+import { useBusca } from "../lib/buscaContext";
 
 const clienteVazio = {
   nome: "",
@@ -18,13 +19,19 @@ export default function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
-  const [modalHistorico, setModalHistorico] = useState(false);
-  const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [historico, setHistorico] = useState([]);
-  const [loadingHistorico, setLoadingHistorico] = useState(false);
   const [form, setForm] = useState(clienteVazio);
   const [editando, setEditando] = useState(null);
   const [busca, setBusca] = useState("");
+  const { itemDestacado } = useBusca();
+  const rowRefs = useRef({});
+
+  // Scroll automático até o item destacado
+  useEffect(() => {
+    if (itemDestacado?.tabela === "clientes" && itemDestacado?.id) {
+      const el = rowRefs.current[itemDestacado.id];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [itemDestacado]);
 
   useEffect(() => {
     carregarClientes();
@@ -46,35 +53,16 @@ export default function Clientes() {
     setLoading(false);
   }
 
-  async function abrirHistorico(cliente) {
-    setClienteSelecionado(cliente);
-    setModalHistorico(true);
-    setLoadingHistorico(true);
-
-    const { data: vendas } = await supabase
-      .from("vendas")
-      .select(
-        "*, itens_venda(quantidade, valor_unitario, materiais(descricao))",
-      )
-      .eq("cliente_id", cliente.id)
-      .order("data", { ascending: false });
-
-    setHistorico(vendas || []);
-    setLoadingHistorico(false);
-  }
-
   async function salvar() {
     if (!form.nome) {
       popup.showWarning("Preencha o nome do cliente!");
       return;
     }
-
     if (editando) {
       await supabase.from("clientes").update(form).eq("id", editando);
     } else {
       await supabase.from("clientes").insert(form);
     }
-
     setModal(false);
     setForm(clienteVazio);
     setEditando(null);
@@ -87,7 +75,6 @@ export default function Clientes() {
     );
     if (!confirmado) return;
 
-    // Remove itens das vendas do cliente
     const { data: vendas } = await supabase
       .from("vendas")
       .select("id")
@@ -99,7 +86,6 @@ export default function Clientes() {
       await supabase.from("vendas").delete().eq("cliente_id", id);
     }
 
-    // Remove itens dos orçamentos do cliente
     const { data: orcamentos } = await supabase
       .from("orcamentos")
       .select("id")
@@ -114,13 +100,11 @@ export default function Clientes() {
       await supabase.from("orcamentos").delete().eq("cliente_id", id);
     }
 
-    // Remove o cliente
     const { error } = await supabase.from("clientes").delete().eq("id", id);
     if (error) {
       popup.showError("Erro ao excluir cliente: " + error.message);
       return;
     }
-
     popup.showSuccess(
       "Cliente e todos os registros relacionados foram excluídos!",
     );
@@ -142,11 +126,6 @@ export default function Clientes() {
     (c) =>
       c.nome.toLowerCase().includes(busca.toLowerCase()) ||
       (c.telefone || "").includes(busca),
-  );
-
-  const totalHistorico = historico.reduce(
-    (acc, v) => acc + (v.valor_total || 0),
-    0,
   );
 
   return (
@@ -202,155 +181,59 @@ export default function Clientes() {
                 </td>
               </tr>
             ) : (
-              filtrados.map((c) => (
-                <tr
-                  key={c.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {c.nome}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {c.telefone || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {c.email || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {c.endereco || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => abrirHistorico(c)}
-                        className="text-purple-400 hover:text-purple-300"
-                        title="Ver histórico"
-                      >
-                        <History size={16} />
-                      </button>
-                      <button
-                        onClick={() => abrirEditar(c)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      {pode.apagarRegistros && (
+              filtrados.map((c) => {
+                const destacado =
+                  itemDestacado?.tabela === "clientes" &&
+                  itemDestacado?.id === c.id;
+                return (
+                  <tr
+                    key={c.id}
+                    ref={(el) => (rowRefs.current[c.id] = el)}
+                    className={`border-b border-gray-700 transition-all duration-500 ${
+                      destacado
+                        ? "bg-gray-500/20 ring-2 ring-inset ring-gray-500/60"
+                        : "hover:bg-gray-700"
+                    }`}
+                  >
+                    <td
+                      className={`px-4 py-3 text-center font-medium ${destacado ? "text-blue-200" : "text-gray-400"}`}
+                    >
+                      {c.nome}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {c.telefone || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {c.email || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {c.endereco || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() => excluir(c.id)}
-                          className="text-red-400 hover:text-red-300"
+                          onClick={() => abrirEditar(c)}
+                          className="text-blue-400 hover:text-blue-300"
                         >
-                          <Trash2 size={16} />
+                          <Pencil size={16} />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {pode.apagarRegistros && (
+                          <button
+                            onClick={() => excluir(c.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
-
-      {/* Modal Histórico */}
-      {modalHistorico && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-3xl max-h-screen overflow-y-auto border border-gray-700">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-100">
-                  Histórico de Compras
-                </h3>
-                <p className="text-sm text-gray-400">
-                  {clienteSelecionado?.nome}
-                </p>
-              </div>
-              <button
-                onClick={() => setModalHistorico(false)}
-                className="text-gray-400 hover:text-gray-200"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {loadingHistorico ? (
-              <p className="text-center text-gray-400 py-8">Carregando...</p>
-            ) : historico.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">
-                Nenhuma compra registrada.
-              </p>
-            ) : (
-              <>
-                <div className="bg-gray-700 rounded-lg p-4 mb-4 flex justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Total de compras</p>
-                    <p className="text-white font-bold text-xl">
-                      {historico.length}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-400 text-sm">Valor total gasto</p>
-                    <p className="text-green-400 font-bold text-xl">
-                      R${" "}
-                      {totalHistorico.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {historico.map((v) => (
-                    <div
-                      key={v.id}
-                      className="bg-gray-700 rounded-lg p-4 border border-gray-600"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="text-gray-100 font-medium">
-                            {v.tipo_trabalho || "Sem tipo"}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {new Date(v.data).toLocaleDateString("pt-BR")} •{" "}
-                            {v.forma_pagamento || "—"}
-                          </p>
-                        </div>
-                        <p className="text-green-400 font-bold">
-                          R${" "}
-                          {(v.valor_total || 0).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                      {v.itens_venda && v.itens_venda.length > 0 && (
-                        <div className="border-t border-gray-600 pt-2 mt-2">
-                          <p className="text-gray-400 text-xs mb-1">
-                            Materiais:
-                          </p>
-                          {v.itens_venda.map((item, i) => (
-                            <p key={i} className="text-gray-300 text-sm">
-                              • {item.materiais?.descricao} — {item.quantidade}{" "}
-                              m² × R${" "}
-                              {(item.valor_unitario || 0).toLocaleString(
-                                "pt-BR",
-                                { minimumFractionDigits: 2 },
-                              )}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      {v.observacao && (
-                        <p className="text-gray-500 text-xs mt-2">
-                          Obs: {v.observacao}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Modal Cadastro/Edição */}
       {modal && (

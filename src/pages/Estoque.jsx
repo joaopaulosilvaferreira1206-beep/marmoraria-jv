@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Plus, Pencil, Trash2, X, Image } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
 import { exportarEstoquePDF, exportarEstoqueExcel } from "../lib/exportar";
 import { useAuth } from "../lib/AuthContext";
+import { useBusca } from "../lib/buscaContext";
 
 const materialVazio = {
   descricao: "",
@@ -26,6 +27,18 @@ export default function Estoque() {
   const [imagemPreview, setImagemPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [modalImagem, setModalImagem] = useState(null);
+  const { itemDestacado } = useBusca();
+  const rowRefs = useRef({});
+
+  // Scroll automático até o item destacado
+  useEffect(() => {
+    if (itemDestacado?.tabela === "materiais" && itemDestacado?.id) {
+      const el = rowRefs.current[itemDestacado.id];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [itemDestacado]);
 
   useEffect(() => {
     carregarMateriais();
@@ -104,9 +117,7 @@ export default function Estoque() {
         .order("sku", { ascending: false })
         .limit(1)
         .single();
-
       const novoCodigo = (ultimo?.sku || 0) + 1;
-
       await supabase.from("materiais").insert({
         sku: novoCodigo,
         descricao: form.descricao,
@@ -138,14 +149,12 @@ export default function Estoque() {
     );
     if (!confirmado) return;
 
-    // Remove itens relacionados
     await supabase.from("itens_venda").delete().eq("material_id", id);
     await supabase.from("itens_orcamento").delete().eq("material_id", id);
     await supabase.from("itens_pedido").delete().eq("material_id", id);
     await supabase.from("entradas").delete().eq("material_id", id);
     await supabase.from("perdas").delete().eq("material_id", id);
 
-    // Remove orçamentos que ficaram sem itens
     const { data: orcsVazios } = await supabase.from("orcamentos").select("id");
     if (orcsVazios) {
       for (const orc of orcsVazios) {
@@ -153,13 +162,11 @@ export default function Estoque() {
           .from("itens_orcamento")
           .select("id", { count: "exact", head: true })
           .eq("orcamento_id", orc.id);
-        if (count === 0) {
+        if (count === 0)
           await supabase.from("orcamentos").delete().eq("id", orc.id);
-        }
       }
     }
 
-    // Remove vendas que ficaram sem itens
     const { data: vendasVazias } = await supabase.from("vendas").select("id");
     if (vendasVazias) {
       for (const venda of vendasVazias) {
@@ -167,13 +174,11 @@ export default function Estoque() {
           .from("itens_venda")
           .select("id", { count: "exact", head: true })
           .eq("venda_id", venda.id);
-        if (count === 0) {
+        if (count === 0)
           await supabase.from("vendas").delete().eq("id", venda.id);
-        }
       }
     }
 
-    // Remove pedidos que ficaram sem itens
     const { data: pedidosVazios } = await supabase.from("pedidos").select("id");
     if (pedidosVazios) {
       for (const pedido of pedidosVazios) {
@@ -181,13 +186,11 @@ export default function Estoque() {
           .from("itens_pedido")
           .select("id", { count: "exact", head: true })
           .eq("pedido_id", pedido.id);
-        if (count === 0) {
+        if (count === 0)
           await supabase.from("pedidos").delete().eq("id", pedido.id);
-        }
       }
     }
 
-    // Remove o material
     const { error } = await supabase.from("materiais").delete().eq("id", id);
     if (error) {
       popup.showError("Erro ao excluir material: " + error.message);
@@ -209,7 +212,6 @@ export default function Estoque() {
       imagem_url: m.imagem_url || null,
       custo: m.valor_medio ?? "",
     });
-
     setImagemPreview(m.imagem_url || null);
     setImagemFile(null);
     setEditando(m.id);
@@ -283,71 +285,83 @@ export default function Estoque() {
                 </td>
               </tr>
             ) : (
-              filtrados.map((m) => (
-                <tr
-                  key={m.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
-                  <td className="px-4 py-3 flex justify-center">
-                    {m.imagem_url ? (
-                      <img
-                        src={m.imagem_url}
-                        alt={m.descricao}
-                        className="w-10 h-10 rounded-lg object-cover cursor-pointer hover:opacity-80 transition"
-                        onClick={() => setModalImagem(m)}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
-                        <Image size={16} className="text-gray-500" />
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {m.sku}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {m.descricao}
-                  </td>
-                  <td
-                    className={`px-4 py-3 font-bold text-center ${m.minimo && m.saldo <= m.minimo ? "text-red-400" : "text-gray-400"}`}
+              filtrados.map((m) => {
+                const destacado =
+                  itemDestacado?.tabela === "materiais" &&
+                  itemDestacado?.id === m.id;
+                return (
+                  <tr
+                    key={m.id}
+                    ref={(el) => (rowRefs.current[m.id] = el)}
+                    className={`border-b border-gray-700 transition-all duration-500 ${
+                      destacado
+                        ? "bg-gray-500/20 ring-2 ring-inset ring-gray-500/60"
+                        : "hover:bg-gray-700"
+                    }`}
                   >
-                    {m.saldo ?? 0}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {m.minimo ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    {m.maximo ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-400">
-                    R${" "}
-                    {(m.valor_medio || 0).toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-center">
-                    {m.unidade}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => abrirEditar(m)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      {pode.apagarRegistros && (
-                        <button
-                          onClick={() => excluir(m.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                    <td className="px-4 py-3 flex justify-center">
+                      {m.imagem_url ? (
+                        <img
+                          src={m.imagem_url}
+                          alt={m.descricao}
+                          className="w-10 h-10 rounded-lg object-cover cursor-pointer hover:opacity-80 transition"
+                          onClick={() => setModalImagem(m)}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+                          <Image size={16} className="text-gray-500" />
+                        </div>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {m.sku}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-center font-medium ${destacado ? "text-yellow-200" : "text-gray-400"}`}
+                    >
+                      {m.descricao}
+                    </td>
+                    <td
+                      className={`px-4 py-3 font-bold text-center ${m.minimo && m.saldo <= m.minimo ? "text-red-400" : "text-gray-400"}`}
+                    >
+                      {m.saldo ?? 0}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {m.minimo ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      {m.maximo ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-400">
+                      R${" "}
+                      {(m.valor_medio || 0).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-center">
+                      {m.unidade}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => abrirEditar(m)}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        {pode.apagarRegistros && (
+                          <button
+                            onClick={() => excluir(m.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -435,8 +449,6 @@ export default function Estoque() {
                   <option>L</option>
                 </select>
               </div>
-
-              {/* Upload de imagem */}
               <div>
                 <label className="text-sm text-gray-300">
                   Foto do Material
