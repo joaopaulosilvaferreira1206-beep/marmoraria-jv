@@ -29,11 +29,10 @@ export default function Entradas() {
 
     useEffect(() => {
         carregarDados()
-        const intervalo = setInterval(carregarDados, 20000)
         const canal = supabase.channel('entradas-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, carregarDados)
             .subscribe()
-        return () => { clearInterval(intervalo); supabase.removeChannel(canal) }
+        return () => supabase.removeChannel(canal)
     }, [])
 
     async function carregarDados() {

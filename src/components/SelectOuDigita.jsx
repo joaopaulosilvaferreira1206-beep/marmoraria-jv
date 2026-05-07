@@ -1,65 +1,96 @@
-import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../lib/supabase'
 
-export default function SelectOuDigita({
-    opcoes = [],
-    valor,
-    onChange,
-    placeholder = 'Selecione ou digite...',
-}) {
+export default function SelectOuDigita({ label, value, onChange, placeholder = 'Selecione ou digite...', opcoes: opcoesProp }) {
+    const [opcoes, setOpcoes] = useState(opcoesProp || [])
     const [aberto, setAberto] = useState(false)
-    const ref = useRef(null)
+    const [texto, setTexto] = useState(value || '')
+    const ref = useRef()
 
     useEffect(() => {
-        function handleClickFora(e) {
-            if (ref.current && !ref.current.contains(e.target)) {
-                setAberto(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickFora)
-        return () => document.removeEventListener('mousedown', handleClickFora)
+        if (!opcoesProp) carregarOpcoes()
     }, [])
 
-    const opcoesFiltradas = opcoes.filter(o =>
-        o.toLowerCase().includes((valor || '').toLowerCase())
+    useEffect(() => {
+        setTexto(value || '')
+    }, [value])
+
+    useEffect(() => {
+        function fechar(e) {
+            if (ref.current && !ref.current.contains(e.target)) setAberto(false)
+        }
+        document.addEventListener('mousedown', fechar)
+        return () => document.removeEventListener('mousedown', fechar)
+    }, [])
+
+    async function carregarOpcoes() {
+        const { data } = await supabase
+            .from('tipos_trabalho')
+            .select('nome')
+            .order('nome')
+        if (data) setOpcoes(data.map(d => d.nome))
+    }
+
+    async function salvarNovoTipo(nome) {
+        if (opcoesProp) return // modo estático, não salva no banco
+        const nomeLimpo = nome.trim()
+        if (!nomeLimpo || opcoes.includes(nomeLimpo)) return
+        await supabase.from('tipos_trabalho').insert({ nome: nomeLimpo })
+        setOpcoes(prev => [...prev, nomeLimpo].sort())
+    }
+
+    const filtradas = opcoes.filter(o =>
+        o.toLowerCase().includes(texto.toLowerCase())
     )
 
-    return (
-        <div ref={ref} className="relative w-full">
-            <div className="relative">
-                <input
-                    type="text"
-                    value={valor || ''}
-                    onChange={e => onChange(e.target.value)}
-                    onFocus={() => setAberto(true)}
-                    placeholder={placeholder}
-                    className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 pr-8 focus:outline-none focus:border-blue-500 placeholder-gray-500"
-                />
-                <button
-                    type="button"
-                    onClick={() => setAberto(!aberto)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
-                >
-                    <ChevronDown size={16} className={`transition-transform ${aberto ? 'rotate-180' : ''}`} />
-                </button>
-            </div>
+    function selecionar(opcao) {
+        setTexto(opcao)
+        onChange(opcao)
+        setAberto(false)
+    }
 
-            {aberto && opcoesFiltradas.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl overflow-hidden">
-                    <div className="max-h-48 overflow-y-auto">
-                        {opcoesFiltradas.map(opcao => (
-                            <button
-                                key={opcao}
-                                type="button"
-                                onClick={() => { onChange(opcao); setAberto(false) }}
-                                className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-700 ${valor === opcao ? 'bg-blue-600/20 text-blue-300' : 'text-gray-200'
-                                    }`}
-                            >
-                                {opcao}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+    function handleBlur() {
+        setTimeout(() => {
+            if (texto.trim() && !opcoes.includes(texto.trim())) {
+                salvarNovoTipo(texto.trim())
+            }
+            onChange(texto.trim())
+            setAberto(false)
+        }, 150)
+    }
+
+    return (
+        <div ref={ref} className="relative">
+            {label && <label className="block text-sm text-gray-400 mb-1">{label}</label>}
+            <input
+                type="text"
+                value={texto}
+                onChange={e => { setTexto(e.target.value); setAberto(true) }}
+                onFocus={() => setAberto(true)}
+                onBlur={handleBlur}
+                placeholder={placeholder}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {aberto && filtradas.length > 0 && (
+                <ul className="absolute z-50 mt-1 w-full bg-gray-700 border border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filtradas.map(opcao => (
+                        <li
+                            key={opcao}
+                            onMouseDown={() => selecionar(opcao)}
+                            className="px-3 py-2 text-gray-100 hover:bg-gray-600 cursor-pointer text-sm"
+                        >
+                            {opcao}
+                        </li>
+                    ))}
+                    {!opcoesProp && texto.trim() && !opcoes.includes(texto.trim()) && (
+                        <li
+                            onMouseDown={() => selecionar(texto.trim())}
+                            className="px-3 py-2 text-blue-400 hover:bg-gray-600 cursor-pointer text-sm border-t border-gray-600"
+                        >
+                            + Adicionar "{texto.trim()}"
+                        </li>
+                    )}
+                </ul>
             )}
         </div>
     )
