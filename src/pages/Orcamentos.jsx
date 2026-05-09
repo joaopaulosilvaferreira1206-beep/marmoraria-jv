@@ -384,8 +384,21 @@ export default function Orcamentos() {
     return validade < hoje;
   });
 
+  async function cancelarVencidos() {
+    const hoje = new Date().toISOString().split("T")[0];
+    await supabase
+      .from("orcamentos")
+      .update({ status: "recusado" })
+      .eq("status", "pendente")
+      .lt("validade", hoje);
+  }
+
   useEffect(() => {
-    carregarDados();
+    async function iniciar() {
+      await cancelarVencidos();
+      await carregarDados();
+    }
+    iniciar();
     const canal = supabase
       .channel("orcamentos-changes")
       .on(

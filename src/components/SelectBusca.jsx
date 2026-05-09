@@ -9,6 +9,8 @@ export default function SelectBusca({
   campoLabel = "nome",
   campoValor = "id",
   campoSecundario = null,
+  manterAberto = false,
+  onToggle = null,
 }) {
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
@@ -42,44 +44,64 @@ export default function SelectBusca({
     }
   }
 
-  useEffect(() => {
-    if (aberto) {
-      atualizarPosicao();
-      if (inputRef.current) inputRef.current.focus();
+  function abrirFechar(novoEstado) {
+    setAberto(novoEstado);
+    if (onToggle) onToggle(novoEstado);
+  }
 
-      // Fecha ao scrollar qualquer elemento pai
+  useEffect(() => {
+    function handleClickFora(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setAberto(false);
+        setBusca("");
+        if (onToggle) onToggle(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFora);
+    return () => document.removeEventListener("mousedown", handleClickFora);
+  }, [onToggle]);
+
+  useEffect(() => {
+    if (!aberto) return;
+
+    atualizarPosicao();
+    if (inputRef.current) inputRef.current.focus();
+
+    let rafId;
+    function loop() {
+      atualizarPosicao();
+      rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
+
+    if (!manterAberto) {
       function handleScroll() {
         setAberto(false);
         setBusca("");
+        if (onToggle) onToggle(false);
       }
-
-      window.addEventListener("scroll", handleScroll, true); // true = capture, pega scroll de qualquer pai
-      return () => window.removeEventListener("scroll", handleScroll, true);
+      window.addEventListener("scroll", handleScroll, true);
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("scroll", handleScroll, true);
+      };
     }
-  }, [aberto]);
 
-  useEffect(() => {
-    if (aberto) {
-      atualizarPosicao();
-      if (inputRef.current) inputRef.current.focus();
-
-      // Atualiza posição enquanto o dropdown estiver aberto
-      const interval = setInterval(atualizarPosicao, 50);
-      return () => clearInterval(interval);
-    }
-  }, [aberto]);
+    return () => cancelAnimationFrame(rafId);
+  }, [aberto, manterAberto, onToggle]);
 
   function selecionar(opcao) {
     onChange(opcao[campoValor]);
     setAberto(false);
     setBusca("");
+    if (onToggle) onToggle(false);
   }
 
   return (
     <div ref={ref} className="relative w-full">
       <button
         type="button"
-        onClick={() => setAberto(!aberto)}
+        onClick={() => abrirFechar(!aberto)}
         className="w-full flex items-center justify-between bg-gray-700 border border-gray-600 text-left rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
       >
         <span className={opcaoSelecionada ? "text-gray-100" : "text-gray-500"}>
@@ -102,6 +124,7 @@ export default function SelectBusca({
             top: posicao.top,
             left: posicao.left,
             width: posicao.width,
+            maxHeight: "220px",
           }}
         >
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
@@ -115,7 +138,7 @@ export default function SelectBusca({
               className="flex-1 bg-transparent text-gray-100 text-sm focus:outline-none placeholder-gray-500"
             />
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div className="overflow-y-auto" style={{ maxHeight: "172px" }}>
             {opcoesFiltradas.length === 0 ? (
               <div className="px-3 py-3 text-gray-500 text-sm text-center">
                 Nenhum resultado encontrado
@@ -126,7 +149,11 @@ export default function SelectBusca({
                   key={opcao[campoValor]}
                   type="button"
                   onClick={() => selecionar(opcao)}
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-700 ${opcao[campoValor] === valor ? "bg-blue-600/20 text-blue-300" : "text-gray-200"}`}
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-700 ${
+                    opcao[campoValor] === valor
+                      ? "bg-blue-600/20 text-blue-300"
+                      : "text-gray-200"
+                  }`}
                 >
                   {campoSecundario && (
                     <span className="text-gray-400 font-mono mr-2">

@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logoJV from "../assets/logo-jv.png";
 
 async function carregarImagemBase64(url) {
   try {
@@ -22,18 +21,21 @@ export async function gerarPDFOrcamento(orcamento, itens, cliente) {
   const margin = 14;
   const IMG_SIZE = 16;
 
-  // Pré-carrega imagens dos materiais
-  const imagensItens = await Promise.all(
-    itens.map((i) =>
+  // Carrega logo e imagens dos materiais em paralelo
+  const [logoBase64, ...imagensItens] = await Promise.all([
+    carregarImagemBase64(
+      new URL("../assets/logo-jv.png", import.meta.url).href,
+    ),
+    ...itens.map((i) =>
       i.imagem_url ? carregarImagemBase64(i.imagem_url) : Promise.resolve(null),
     ),
-  );
+  ]);
 
   // ── CABEÇALHO ──────────────────────────────────────────────
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, W, 38, "F");
 
-  doc.addImage(logoJV, "PNG", margin, 4, 50, 28);
+  if (logoBase64) doc.addImage(logoBase64, "PNG", margin, 4, 50, 28);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
@@ -224,7 +226,7 @@ export async function gerarPDFOrcamento(orcamento, itens, cliente) {
     { align: "right" },
   );
 
-  y += 24; // avança y para depois do bloco de totalizadores
+  y += 24;
 
   // ── FORMA DE PAGAMENTO ─────────────────────────────────────
   if (orcamento.forma_pagamento) {
@@ -286,7 +288,8 @@ export async function gerarPDFOrcamento(orcamento, itens, cliente) {
 
   doc.line(W - margin - 75, y, W - margin, y);
   doc.text("Assinatura / Carimbo da Empresa", W - margin - 75, y + 4);
-  doc.text("Marcenaria & Marmoraria J.V.", W - margin - 75, y + 8);
+  doc.text("D DO SOCORRO R RIBEIRO LTDA", W - margin - 75, y + 8);
+  doc.text("CNPJ: 06.197.551/0001-73", W - margin - 75, y + 12);
 
   // ── RODAPÉ ─────────────────────────────────────────────────
   doc.setFillColor(0, 102, 179);

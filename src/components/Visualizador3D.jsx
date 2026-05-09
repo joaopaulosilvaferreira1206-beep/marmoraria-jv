@@ -606,7 +606,9 @@ export function Visualizador3D({ item, onFechar }) {
 
       function animate() {
         animId = requestAnimationFrame(animate);
-        if (!isDragging) rotY += 0.003;
+        const isAcabamento =
+          (item.tipo_trabalho || "").toLowerCase() === "acabamento";
+        if (!isDragging && !isAcabamento) rotY += 0.003;
 
         // Órbita esférica completa 360°
         const r = zoomRef.current;
