@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -33,5 +33,15 @@ export default defineConfig(({ mode }) => {
         }
       })
     ].filter(Boolean),
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.js'],
+      globals: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+        exclude: ['node_modules/', 'dist/', 'android/', 'electron/', 'src/test/'],
+      },
+    },
   }
 })
