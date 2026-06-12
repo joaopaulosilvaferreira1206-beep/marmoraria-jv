@@ -103,8 +103,8 @@ export default function Estoque() {
         .from("materiais")
         .update({
           descricao: form.descricao,
-          minimo: Number(form.minimo) || 0,
-          maximo: Number(form.maximo) || 0,
+          minimo: Math.max(0, Number(form.minimo) || 0),
+          maximo: Math.max(0, Number(form.maximo) || 0),
           unidade: form.unidade,
           imagem_url: imagemUrl,
           valor_medio: Number(form.custo) || 0,
@@ -122,8 +122,8 @@ export default function Estoque() {
         sku: novoCodigo,
         descricao: form.descricao,
         valor_medio: Number(form.custo) || 0,
-        minimo: Number(form.minimo) || 0,
-        maximo: Number(form.maximo) || 0,
+        minimo: Math.max(0, Number(form.minimo) || 0),
+        maximo: Math.max(0, Number(form.maximo) || 0),
         unidade: form.unidade,
         imagem_url: imagemUrl,
         saldo: 0,
@@ -324,7 +324,7 @@ export default function Estoque() {
                     <td
                       className={`px-4 py-3 font-bold text-center ${m.minimo && m.saldo <= m.minimo ? "text-red-400" : "text-gray-400"}`}
                     >
-                      {m.saldo ?? 0}
+                      {parseFloat((m.saldo ?? 0).toFixed(2))}
                     </td>
                     <td className="px-4 py-3 text-center text-gray-400">
                       {m.minimo ?? "—"}
@@ -401,10 +401,17 @@ export default function Estoque() {
                   </label>
                   <input
                     type="number"
+                    min="0"
                     value={form.minimo}
-                    onChange={(e) =>
-                      setForm({ ...form, minimo: e.target.value })
-                    }
+                    onChange={(e) => {
+                      if (Number(e.target.value) < 0) {
+                        popup.showWarning(
+                          "Não são permitidos valores negativos! Digite apenas valores positivos.",
+                        );
+                        return;
+                      }
+                      setForm({ ...form, minimo: e.target.value });
+                    }}
                     className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -414,10 +421,17 @@ export default function Estoque() {
                   </label>
                   <input
                     type="number"
+                    min="0"
                     value={form.maximo}
-                    onChange={(e) =>
-                      setForm({ ...form, maximo: e.target.value })
-                    }
+                    onChange={(e) => {
+                      if (Number(e.target.value) < 0) {
+                        popup.showWarning(
+                          "Não são permitidos valores negativos! Digite apenas valores positivos.",
+                        );
+                        return;
+                      }
+                      setForm({ ...form, maximo: e.target.value });
+                    }}
                     className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -428,8 +442,17 @@ export default function Estoque() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={form.custo}
-                  onChange={(e) => setForm({ ...form, custo: e.target.value })}
+                  onChange={(e) => {
+                    if (Number(e.target.value) < 0) {
+                      popup.showWarning(
+                        "Não são permitidos valores negativos! Digite apenas valores positivos.",
+                      );
+                      return;
+                    }
+                    setForm({ ...form, custo: e.target.value });
+                  }}
                   className="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-blue-500"
                   placeholder="0.00"
                 />
