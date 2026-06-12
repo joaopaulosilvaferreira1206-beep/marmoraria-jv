@@ -824,6 +824,7 @@ export default function Orcamentos() {
                                   imagem_url:
                                     item.materiais?.imagem_url || null,
                                   tipo_trabalho: item.tipo_trabalho || "",
+                                  quantidade: item.quantidade || 0,
                                 }}
                               />
                             </div>
