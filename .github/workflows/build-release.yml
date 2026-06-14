@@ -89,36 +89,36 @@ jobs:
           path: apk-out/*.apk
 
   # ─────────────────────────────────────────────────
-  # RELEASE — publica/atualiza o release "latest" no GitHub
+  # RELEASE — só roda após AMBOS os builds terminarem
   # ─────────────────────────────────────────────────
   release:
-    needs: [windows, android]
+    needs: [windows, android]   # espera os dois builds completos
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Baixar artefatos
+      - name: Baixar artefatos dos dois jobs
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Publicar release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: "Marmoraria JV — Download"
-          make_latest: true
-          body: |
-            ## Instaladores mais recentes
+      - name: Remover release/tag 'latest' anterior
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes 2>/dev/null || true
+          git push --delete origin latest 2>/dev/null || true
 
-            | Plataforma | Como instalar |
-            |:---|:---|
-            | **Windows** → baixe o `.exe` | Execute e siga o instalador |
-            | **Android** → baixe o `.apk` | Transfira pro celular, ative *Fontes desconhecidas* e abra o arquivo |
-
-            > Atualizado automaticamente a cada alteração no sistema.
-          files: |
-            artifacts/windows/*.exe
+      - name: Publicar release com os dois instaladores
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh release create latest \
+            --title "Marmoraria JV v${VERSION} — Download" \
+            --notes $'## Instaladores\n\n**Windows** → baixe o `.exe` e execute para instalar\n\n**Android** → baixe o `.apk`, transfira para o celular, ative *Fontes desconhecidas* e instale\n\n---\nAtualizado automaticamente a cada alteração.' \
+            --latest \
+            artifacts/windows/*.exe \
             artifacts/android/*.apk
