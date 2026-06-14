@@ -11,7 +11,6 @@ import {
 import { usePopup } from "../components/PopupProvider";
 import SelectBusca from "../components/SelectBusca";
 import SelectOuDigita from "../components/SelectOuDigita";
-import { BotaoVisualizar } from "../components/Visualizador3D";
 import { gerarPDFOrcamento } from "../lib/pdfOrcamento";
 
 const orcamentoVazio = {
@@ -818,15 +817,6 @@ export default function Orcamentos() {
                                   {item.tipo_trabalho}
                                 </span>
                               )}
-                              <BotaoVisualizar
-                                item={{
-                                  descricao: item.materiais?.descricao || "",
-                                  imagem_url:
-                                    item.materiais?.imagem_url || null,
-                                  tipo_trabalho: item.tipo_trabalho || "",
-                                  quantidade: item.quantidade || 0,
-                                }}
-                              />
                             </div>
                           ))}
                         </div>
