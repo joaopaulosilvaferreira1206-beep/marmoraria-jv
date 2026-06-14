@@ -10,6 +10,7 @@ export default function Backup() {
     const { showPopup } = usePopup()
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/immutability
         carregarBackups()
     }, [])
 

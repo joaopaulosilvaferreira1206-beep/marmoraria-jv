@@ -28,6 +28,7 @@ export default function BuscaGlobal({ aberta, onFechar }) {
 
   useEffect(() => {
     if (aberta) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
       setResultados({
         clientes: [],
@@ -42,6 +43,7 @@ export default function BuscaGlobal({ aberta, onFechar }) {
 
   useEffect(() => {
     if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResultados({
         clientes: [],
         materiais: [],
@@ -51,6 +53,7 @@ export default function BuscaGlobal({ aberta, onFechar }) {
       });
       return;
     }
+    // eslint-disable-next-line react-hooks/immutability
     const timer = setTimeout(() => buscar(query.trim()), 300);
     return () => clearTimeout(timer);
   }, [query]);

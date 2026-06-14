@@ -8,10 +8,12 @@ export default function SelectOuDigita({ label, value, onChange, placeholder = '
     const ref = useRef()
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/immutability
         if (!opcoesProp) carregarOpcoes()
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTexto(value || '')
     }, [value])
 

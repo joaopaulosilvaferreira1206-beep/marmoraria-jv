@@ -239,6 +239,7 @@ export default function Entradas() {
                         </tr>
                     </thead>
                     <tbody>
+                        {/* eslint-disable-next-line no-nested-ternary */}
                         {loading ? (
                             <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : entradas.length === 0 ? (

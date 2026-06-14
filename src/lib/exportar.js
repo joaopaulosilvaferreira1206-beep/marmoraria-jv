@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx'
 import {
   C, W, MRG, ALT_CAB,
   novoDoc, carregarLogo,
-  desenharCabecalho, secaoTitulo, TABLE_STYLES, aplicarRodapes,
+  desenharCabecalho, TABLE_STYLES, aplicarRodapes,
 } from './pdfBase'
 
 // ─── Helper interno: doc com cabeçalho já desenhado ──────────────────────────
@@ -104,7 +104,7 @@ export async function exportarEstoquePDF(materiais) {
   // KPIs
   const totalItens   = materiais.length
   const totalValor   = materiais.reduce((a, m) => a + (m.valor_total || 0), 0)
-  const criticos     = materiais.filter(m => m.minimo != null && (m.saldo ?? 0) <= m.minimo).length
+  const criticos     = materiais.filter(m => m.minimo !== null && (m.saldo ?? 0) <= m.minimo).length
 
   const boxW = (W - MRG * 2 - 16) / 3
   const kpis = [
@@ -130,7 +130,7 @@ export async function exportarEstoquePDF(materiais) {
     ...TABLE_STYLES,
     head: [['SKU', 'Descrição', 'Saldo', 'Mín.', 'Máx.', 'Vlr. Médio', 'Vlr. Total', 'Un.']],
     body: materiais.map(m => {
-      const critico = m.minimo != null && (m.saldo ?? 0) <= m.minimo
+      const critico = m.minimo !== null && (m.saldo ?? 0) <= m.minimo
       return [
         m.sku,
         m.descricao,

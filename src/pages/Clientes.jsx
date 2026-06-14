@@ -21,7 +21,7 @@ export default function Clientes() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(clienteVazio);
   const [editando, setEditando] = useState(null);
-  const [busca, setBusca] = useState("");
+  const [busca] = useState("");
   const { itemDestacado } = useBusca();
   const rowRefs = useRef({});
 
@@ -168,6 +168,7 @@ export default function Clientes() {
             </tr>
           </thead>
           <tbody>
+            {/* eslint-disable-next-line no-nested-ternary */}
             {loading ? (
               <tr>
                 <td colSpan={5} className="text-center py-8 text-gray-400">

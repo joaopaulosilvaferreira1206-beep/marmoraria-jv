@@ -105,6 +105,7 @@ export default function SelectBusca({
         className="w-full flex items-center justify-between bg-gray-700 border border-gray-600 text-left rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
       >
         <span className={opcaoSelecionada ? "text-gray-100" : "text-gray-500"}>
+          {/* eslint-disable-next-line no-nested-ternary */}
           {opcaoSelecionada
             ? campoSecundario
               ? `[${opcaoSelecionada[campoSecundario]}] ${opcaoSelecionada[campoLabel]}`

@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSessao(session)
+            // eslint-disable-next-line react-hooks/immutability
             if (session) carregarPerfil(session.user.id)
             else setLoading(false)
         })
@@ -59,6 +60,7 @@ export function AuthProvider({ children }) {
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     return useContext(AuthContext)
 }

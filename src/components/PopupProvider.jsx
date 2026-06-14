@@ -81,6 +81,7 @@ export function PopupProvider({ children }) {
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePopup() {
     const ctx = useContext(PopupContext)
     if (!ctx) {

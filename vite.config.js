@@ -2,7 +2,8 @@
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig(({ mode }) => {
+/* global process */
+export default defineConfig(() => {
   const isElectron = process.env.BUILD_TARGET === 'electron'
 
   return {

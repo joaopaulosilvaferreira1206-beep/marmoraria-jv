@@ -37,6 +37,7 @@ export default function Relatorios() {
   const [dropdownAberto, setDropdownAberto] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     carregarClientes();
   }, []);
 

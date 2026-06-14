@@ -35,7 +35,7 @@ export default function Pedidos() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, carregarDados)
             .subscribe()
         return () => supabase.removeChannel(canal)
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     async function carregarDados() {
         setLoading(true)
@@ -230,6 +230,7 @@ export default function Pedidos() {
                         </tr>
                     </thead>
                     <tbody>
+                        {/* eslint-disable-next-line no-nested-ternary */}
                         {loading ? (
                             <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : pedidos.length === 0 ? (

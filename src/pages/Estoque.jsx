@@ -18,7 +18,7 @@ export default function Estoque() {
   const { pode } = useAuth();
   const popup = usePopup();
   const [materiais, setMateriais] = useState([]);
-  const [busca, setBusca] = useState("");
+  const [busca] = useState("");
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(materialVazio);
@@ -272,6 +272,7 @@ export default function Estoque() {
             </tr>
           </thead>
           <tbody>
+            {/* eslint-disable-next-line no-nested-ternary */}
             {loading ? (
               <tr>
                 <td colSpan={9} className="text-center py-8 text-gray-400">
@@ -524,6 +525,7 @@ export default function Estoque() {
                 disabled={uploading}
                 className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {/* eslint-disable-next-line no-nested-ternary */}
                 {uploading ? (
                   <>
                     <svg

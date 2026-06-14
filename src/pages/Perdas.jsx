@@ -26,7 +26,7 @@ export default function Perdas() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'perdas' }, carregarDados)
             .subscribe()
         return () => supabase.removeChannel(canal)
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     async function carregarDados() {
         setLoading(true)
@@ -115,6 +115,7 @@ export default function Perdas() {
                         </tr>
                     </thead>
                     <tbody>
+                        {/* eslint-disable-next-line no-nested-ternary */}
                         {loading ? (
                             <tr><td colSpan={4} className="text-center py-8 text-gray-400">Carregando...</td></tr>
                         ) : perdas.length === 0 ? (

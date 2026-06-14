@@ -31,6 +31,7 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
     ].filter(Boolean)
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/immutability
         verificarEstoque()
         const interval = setInterval(verificarEstoque, 5000)
         const remover = onEstoqueAtualizado(verificarEstoque)

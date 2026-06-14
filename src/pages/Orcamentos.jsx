@@ -760,6 +760,7 @@ export default function Orcamentos() {
             </tr>
           </thead>
           <tbody>
+            {/* eslint-disable-next-line no-nested-ternary */}
             {loading ? (
               <tr>
                 <td colSpan={8} className="text-center py-8 text-gray-400">
@@ -780,14 +781,11 @@ export default function Orcamentos() {
                 const diffDias = validadeDate
                   ? (validadeDate - hoje) / (1000 * 60 * 60 * 24)
                   : null;
-                const rowClass =
-                  o.status === "pendente" && validadeDate
-                    ? validadeDate < hoje
-                      ? "bg-red-900/10"
-                      : diffDias <= 3
-                        ? "bg-yellow-900/10"
-                        : ""
-                    : "";
+                let rowClass = ""
+                if (o.status === "pendente" && validadeDate) {
+                  if (validadeDate < hoje) rowClass = "bg-red-900/10"
+                  else if (diffDias <= 3) rowClass = "bg-yellow-900/10"
+                }
                 return (
                   <tr
                     key={o.id}

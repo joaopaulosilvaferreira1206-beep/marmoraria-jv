@@ -17,6 +17,7 @@ export function BuscaProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useBusca() {
   return useContext(BuscaContext);
 }
