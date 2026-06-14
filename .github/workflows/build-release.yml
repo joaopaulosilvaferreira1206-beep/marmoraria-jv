@@ -1,12 +1,8 @@
 name: Build & Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Versão do release (ex: 1.2.0)'
-        required: true
-        default: '1.0.0'
+  push:
+    branches: [main]
 
 jobs:
   # ─────────────────────────────────────────────────
@@ -24,9 +20,6 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
-
-      - name: Atualizar versão no package.json
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
 
       - name: Build web + instalador Windows
         env:
@@ -63,9 +56,6 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      - name: Atualizar versão no package.json
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
-
       - name: Build web assets
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -85,11 +75,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
-      - name: Renomear APK
+      - name: Preparar APK
         run: |
+          VERSION=$(node -p "require('./package.json').version")
           mkdir -p apk-out
           cp android/app/build/outputs/apk/release/app-release-unsigned.apk \
-             apk-out/MarmorariaJV-v${{ github.event.inputs.version }}.apk
+             "apk-out/MarmorariaJV-v${VERSION}.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -98,7 +89,7 @@ jobs:
           path: apk-out/*.apk
 
   # ─────────────────────────────────────────────────
-  # RELEASE — cria o release no GitHub com os dois arquivos
+  # RELEASE — publica/atualiza o release "latest" no GitHub
   # ─────────────────────────────────────────────────
   release:
     needs: [windows, android]
@@ -106,25 +97,28 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Baixar artefatos
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Criar Release no GitHub
+      - name: Publicar release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: "Marmoraria JV v${{ github.event.inputs.version }}"
+          tag_name: latest
+          name: "Marmoraria JV — Download"
+          make_latest: true
           body: |
-            ## Instaladores — v${{ github.event.inputs.version }}
+            ## Instaladores mais recentes
 
-            | Plataforma | Arquivo | Como instalar |
-            |:---|:---|:---|
-            | **Windows** | `.exe` | Execute e siga o instalador |
-            | **Android** | `.apk` | Transfira para o celular → ative *Fontes desconhecidas* → abra o arquivo |
+            | Plataforma | Como instalar |
+            |:---|:---|
+            | **Windows** → baixe o `.exe` | Execute e siga o instalador |
+            | **Android** → baixe o `.apk` | Transfira pro celular, ative *Fontes desconhecidas* e abra o arquivo |
 
-            > O APK Android é uma build de release não assinada — funciona em qualquer dispositivo com Android 7.0+ (API 24).
+            > Atualizado automaticamente a cada alteração no sistema.
           files: |
             artifacts/windows/*.exe
             artifacts/android/*.apk
