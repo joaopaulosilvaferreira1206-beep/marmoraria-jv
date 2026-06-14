@@ -229,13 +229,13 @@ export default function Estoque() {
       <div className="flex gap-2 justify-end">
         <button
           onClick={() => exportarEstoquePDF(materiais)}
-          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm"
+          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 transition text-sm"
         >
           PDF
         </button>
         <button
           onClick={() => exportarEstoqueExcel(materiais)}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition text-sm"
         >
           Excel
         </button>
@@ -346,14 +346,14 @@ export default function Estoque() {
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={() => abrirEditar(m)}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-blue-400 hover:text-blue-300 p-2.5 rounded-lg"
                         >
                           <Pencil size={16} />
                         </button>
                         {pode.apagarRegistros && (
                           <button
                             onClick={() => excluir(m.id)}
-                            className="text-red-400 hover:text-red-300"
+                            className="text-red-400 hover:text-red-300 p-2.5 rounded-lg"
                           >
                             <Trash2 size={16} />
                           </button>

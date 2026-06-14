@@ -65,7 +65,7 @@ export default function Header({ onMenuClick }) {
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
-            className="lg:hidden text-gray-400 hover:text-white transition-colors"
+            className="lg:hidden text-gray-400 hover:text-white transition-colors p-2 rounded-lg"
           >
             <Menu size={24} />
           </button>
@@ -75,7 +75,7 @@ export default function Header({ onMenuClick }) {
           {/* Botão de busca */}
           <button
             onClick={() => setBuscaAberta(true)}
-            className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-colors border border-gray-600"
+            className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white text-sm px-3 py-2 rounded-lg transition-colors border border-gray-600"
           >
             <Search size={15} />
             <span className="hidden sm:inline text-xs">Buscar</span>

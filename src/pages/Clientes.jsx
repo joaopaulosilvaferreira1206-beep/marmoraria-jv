@@ -214,14 +214,14 @@ export default function Clientes() {
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={() => abrirEditar(c)}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-blue-400 hover:text-blue-300 p-2.5 rounded-lg"
                         >
                           <Pencil size={16} />
                         </button>
                         {pode.apagarRegistros && (
                           <button
                             onClick={() => excluir(c.id)}
-                            className="text-red-400 hover:text-red-300"
+                            className="text-red-400 hover:text-red-300 p-2.5 rounded-lg"
                           >
                             <Trash2 size={16} />
                           </button>

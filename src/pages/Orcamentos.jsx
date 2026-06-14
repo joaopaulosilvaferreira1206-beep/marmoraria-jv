@@ -129,22 +129,25 @@ function FormItens({
     <>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div className="col-span-2">
-          <SelectBusca
-            opcoes={materiais}
-            valor={itemForm.material_id}
-            onChange={(v) => {
-              const mat = materiais.find((m) => m.id === v);
-              setItemForm((f) => ({
-                ...f,
-                material_id: v,
-                valor_unitario: mat?.valor_medio || "",
-                desconto: 0,
-              }));
-            }}
-            placeholder="Buscar por nome ou SKU..."
-            campoLabel="descricao"
-            campoSecundario="sku"
-          />
+          <label className="text-xs text-gray-400">Material *</label>
+          <div className="mt-1">
+            <SelectBusca
+              opcoes={materiais}
+              valor={itemForm.material_id}
+              onChange={(v) => {
+                const mat = materiais.find((m) => m.id === v);
+                setItemForm((f) => ({
+                  ...f,
+                  material_id: v,
+                  valor_unitario: mat?.valor_medio || "",
+                  desconto: 0,
+                }));
+              }}
+              placeholder="Buscar por nome ou SKU..."
+              campoLabel="descricao"
+              campoSecundario="sku"
+            />
+          </div>
         </div>
         <div className="col-span-2">
           <label className="text-xs text-gray-400">

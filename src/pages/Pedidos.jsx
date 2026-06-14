@@ -354,18 +354,24 @@ export default function Pedidos() {
                             <h4 className="font-medium text-gray-300 mb-3">Itens do Pedido</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                                 <div className="sm:col-span-2">
-                                    <SelectBusca
-                                        opcoes={materiais}
-                                        valor={itemForm.material_id}
-                                        onChange={v => setItemForm({ ...itemForm, material_id: v })}
-                                        placeholder="Buscar por nome ou SKU..."
-                                        campoLabel="descricao"
-                                        campoSecundario="sku"
-                                    />
+                                    <label className="text-xs text-gray-400">Material</label>
+                                    <div className="mt-1">
+                                        <SelectBusca
+                                            opcoes={materiais}
+                                            valor={itemForm.material_id}
+                                            onChange={v => setItemForm({ ...itemForm, material_id: v })}
+                                            placeholder="Buscar por nome ou SKU..."
+                                            campoLabel="descricao"
+                                            campoSecundario="sku"
+                                        />
+                                    </div>
                                 </div>
-                                <input type="number" step="0.01" placeholder="Qtd" value={itemForm.quantidade}
-                                    onChange={e => setItemForm({ ...itemForm, quantidade: e.target.value })}
-                                    className="bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+                                <div>
+                                    <label className="text-xs text-gray-400">Quantidade</label>
+                                    <input type="number" step="0.01" placeholder="0.00" value={itemForm.quantidade}
+                                        onChange={e => setItemForm({ ...itemForm, quantidade: e.target.value })}
+                                        className="w-full mt-1 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+                                </div>
                             </div>
                             <button onClick={adicionarItem}
                                 className="text-sm bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-lg mb-3 transition-colors">
