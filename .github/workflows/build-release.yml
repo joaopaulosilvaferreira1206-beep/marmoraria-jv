@@ -1,0 +1,124 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão do release (ex: 1.2.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  # ─────────────────────────────────────────────────
+  # WINDOWS — instalador .exe via Electron + NSIS
+  # ─────────────────────────────────────────────────
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build web + instalador Windows
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm run build
+          npm run build:desktop
+
+      - name: Upload instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: release/*.exe
+
+  # ─────────────────────────────────────────────────
+  # ANDROID — APK via Capacitor + Gradle
+  # ─────────────────────────────────────────────────
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build web assets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Sincronizar Capacitor → Android
+        run: npx cap sync android
+
+      - name: Configurar SDK path
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      - name: Permissão de execução no Gradle
+        run: chmod +x android/gradlew
+
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Renomear APK
+        run: |
+          mkdir -p apk-out
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk \
+             apk-out/MarmorariaJV-v${{ github.event.inputs.version }}.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: apk-out/*.apk
+
+  # ─────────────────────────────────────────────────
+  # RELEASE — cria o release no GitHub com os dois arquivos
+  # ─────────────────────────────────────────────────
+  release:
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Baixar artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Criar Release no GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: "Marmoraria JV v${{ github.event.inputs.version }}"
+          body: |
+            ## Instaladores — v${{ github.event.inputs.version }}
+
+            | Plataforma | Arquivo | Como instalar |
+            |:---|:---|:---|
+            | **Windows** | `.exe` | Execute e siga o instalador |
+            | **Android** | `.apk` | Transfira para o celular → ative *Fontes desconhecidas* → abra o arquivo |
+
+            > O APK Android é uma build de release não assinada — funciona em qualquer dispositivo com Android 7.0+ (API 24).
+          files: |
+            artifacts/windows/*.exe
+            artifacts/android/*.apk
