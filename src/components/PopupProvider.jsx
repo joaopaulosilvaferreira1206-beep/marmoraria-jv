@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 const PopupContext = createContext(null)
 
@@ -11,6 +11,23 @@ const toneStyles = {
 
 export function PopupProvider({ children }) {
     const [popup, setPopup] = useState(null)
+    const popupRef = useRef(null)
+
+    useEffect(() => {
+        popupRef.current = popup
+    }, [popup])
+
+    // Fecha o popup ao trocar de rota (hashchange)
+    useEffect(() => {
+        function onHashChange() {
+            if (popupRef.current) {
+                popupRef.current.resolve(false)
+                setPopup(null)
+            }
+        }
+        window.addEventListener('hashchange', onHashChange)
+        return () => window.removeEventListener('hashchange', onHashChange)
+    }, [])
 
     function openPopup(config) {
         return new Promise((resolve) => {

@@ -116,7 +116,7 @@ export default function Estoque() {
         .select("sku")
         .order("sku", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       const novoCodigo = (ultimo?.sku || 0) + 1;
       await supabase.from("materiais").insert({
         sku: novoCodigo,

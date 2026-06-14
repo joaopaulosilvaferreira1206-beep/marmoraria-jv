@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from './lib/AuthContext'
 import { gerarBackup } from './lib/backup'
@@ -18,6 +18,18 @@ import Orcamentos from './pages/Orcamentos'
 import Relatorios from './pages/Relatorios'
 import Backup from './pages/Backup'
 import Usuarios from './pages/Usuarios'
+
+function AcessoNegado() {
+  const navigate = useNavigate()
+  useEffect(() => { const t = setTimeout(() => navigate('/'), 2500); return () => clearTimeout(t) }, [navigate])
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+      <div className="text-5xl">🔒</div>
+      <h2 className="text-xl font-semibold text-gray-100">Acesso restrito</h2>
+      <p className="text-gray-400 text-sm">Você não tem permissão para acessar esta página.<br/>Redirecionando para o Dashboard…</p>
+    </div>
+  )
+}
 
 function Layout({ onLogout }) {
   const { pode } = useAuth()
@@ -44,13 +56,13 @@ function Layout({ onLogout }) {
             <Route path="/orcamentos" element={<Orcamentos />} />
             <Route path="/pedidos" element={<Pedidos />} />
             <Route path="/relatorios" element={
-              pode.verRelatorios ? <Relatorios /> : <Navigate to="/" />
+              pode.verRelatorios ? <Relatorios /> : <AcessoNegado />
             } />
             <Route path="/backup" element={
-              pode.acessarBackup ? <Backup /> : <Navigate to="/" />
+              pode.acessarBackup ? <Backup /> : <AcessoNegado />
             } />
             <Route path="/usuarios" element={
-              pode.gerenciarUsuarios ? <Usuarios /> : <Navigate to="/" />
+              pode.gerenciarUsuarios ? <Usuarios /> : <AcessoNegado />
             } />
           </Routes>
         </main>
