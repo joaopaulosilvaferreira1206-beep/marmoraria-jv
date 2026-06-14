@@ -99,13 +99,13 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug
 
       - name: Preparar APK
         run: |
           VERSION=$(node -p "require('./package.json').version")
           mkdir -p apk-out
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk \
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
              "apk-out/MarmorariaJV-v${VERSION}.apk"
 
       - name: Upload APK
