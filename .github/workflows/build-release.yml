@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Instalar dependências
@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - uses: actions/setup-java@v4
@@ -62,18 +62,20 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Sincronizar Capacitor → Android
-        run: npx cap sync android
+      - name: Copiar web assets para o Android
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/. android/app/src/main/assets/public/
 
-      - name: Configurar SDK path
+      - name: Configurar Android SDK path
         run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-
-      - name: Permissão de execução no Gradle
-        run: chmod +x android/gradlew
 
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
       - name: Preparar APK
         run: |
@@ -92,7 +94,7 @@ jobs:
   # RELEASE — só roda após AMBOS os builds terminarem
   # ─────────────────────────────────────────────────
   release:
-    needs: [windows, android]   # espera os dois builds completos
+    needs: [windows, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
