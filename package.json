@@ -12,7 +12,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "dev:desktop": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "build:desktop": "cross-env BUILD_TARGET=electron vite build && electron-builder",
+        "build:desktop": "cross-env BUILD_TARGET=electron vite build && electron-builder --publish never",
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
