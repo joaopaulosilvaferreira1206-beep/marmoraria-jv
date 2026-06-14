@@ -1,316 +1,215 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable from 'jspdf-autotable'
+import {
+  C, EMPRESA, W, MRG, ALT_CAB,
+  novoDoc, carregarLogo, carregarImagemBase64,
+  desenharCabecalho, secaoTitulo, TABLE_STYLES, aplicarRodapes,
+} from './pdfBase'
 
-async function carregarImagemBase64(url) {
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
+const IMG_SZ = 16
 
 export async function gerarPDFOrcamento(orcamento, itens, cliente) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W = 210;
-  const margin = 14;
-  const IMG_SIZE = 16;
+  const doc = novoDoc()
 
-  // Carrega logo e imagens dos materiais em paralelo
-  const [logoBase64, ...imagensItens] = await Promise.all([
-    carregarImagemBase64(
-      new URL("../assets/logo-jv.png", import.meta.url).href,
-    ),
-    ...itens.map((i) =>
-      i.imagem_url ? carregarImagemBase64(i.imagem_url) : Promise.resolve(null),
-    ),
-  ]);
+  // Carrega logo e fotos dos itens em paralelo
+  const [logo, ...fotos] = await Promise.all([
+    carregarLogo(),
+    ...itens.map(i => carregarImagemBase64(i.imagem_url)),
+  ])
 
-  // ── CABEÇALHO ──────────────────────────────────────────────
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, W, 38, "F");
+  // ── CABEÇALHO ────────────────────────────────────────────────────────────
+  desenharCabecalho(doc, logo)
 
-  if (logoBase64) doc.addImage(logoBase64, "PNG", margin, 4, 50, 28);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(0, 102, 179);
-  doc.text("MARCENARIA & MARMORARIA J.V.", W - margin, 10, { align: "right" });
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(50, 50, 50);
-  doc.text(
-    "Especializada na confecção de móveis e esquadrias em madeira e MDF simples e trabalhadas;",
-    W - margin,
-    15,
-    { align: "right" },
-  );
-  doc.text("temos ainda, mármores e granitos em geral.", W - margin, 19, {
-    align: "right",
-  });
-  doc.setFont("helvetica", "bold");
-  doc.text(
-    "Rodovia Santos Dumont (em frente ao Aeroporto) - BRAGANÇA - PARÁ",
-    W - margin,
-    24,
-    { align: "right" },
-  );
-  doc.text("Fone: (91) 3425-2208", W - margin, 28, { align: "right" });
-
-  doc.setFillColor(0, 102, 179);
-  doc.rect(0, 36, W, 1.2, "F");
-  doc.setFillColor(0, 153, 51);
-  doc.rect(0, 37.2, W, 1.2, "F");
-
-  // ── TÍTULO ─────────────────────────────────────────────────
-  const numOrc = orcamento.id?.slice(0, 8).toUpperCase() || "--------";
-  doc.setFillColor(220, 230, 242);
-  doc.rect(margin, 41, W - margin * 2, 7, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(0, 60, 120);
-  doc.text(`ORÇAMENTO Nº: ${numOrc}`, W / 2, 46.2, { align: "center" });
-
-  // ── INFO ───────────────────────────────────────────────────
-  doc.setFillColor(240, 240, 240);
-  doc.rect(margin, 50, W - margin * 2, 7, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(60, 60, 60);
-
+  // ── TÍTULO DO DOCUMENTO ───────────────────────────────────────────────────
+  const numOrc  = orcamento.id?.slice(0, 8).toUpperCase() || '--------'
   const dataOrc = orcamento.data
-    ? new Date(orcamento.data + "T12:00:00").toLocaleDateString("pt-BR")
-    : "—";
+    ? new Date(orcamento.data + 'T12:00:00').toLocaleDateString('pt-BR')
+    : '—'
   const validade = orcamento.validade
-    ? new Date(orcamento.validade + "T12:00:00").toLocaleDateString("pt-BR")
-    : "—";
+    ? new Date(orcamento.validade + 'T12:00:00').toLocaleDateString('pt-BR')
+    : '—'
 
-  doc.text(`Data: ${dataOrc}`, margin + 2, 55);
-  doc.text(`Validade: ${validade}`, W / 2, 55, { align: "center" });
-  doc.text(
-    `Pagamento: ${orcamento.forma_pagamento || "—"}`,
-    W - margin - 2,
-    55,
-    { align: "right" },
-  );
+  let y = ALT_CAB + 4
 
-  // ── DADOS DO CLIENTE ───────────────────────────────────────
-  let y = 61;
-  doc.setFillColor(0, 102, 179);
-  doc.rect(margin, y, W - margin * 2, 6, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text("1 DADOS DO CLIENTE", margin + 2, y + 4.2);
+  // Caixa do título
+  doc.setFillColor(...C.AZUL_CLARO)
+  doc.roundedRect(MRG, y, W - MRG * 2, 9, 1.5, 1.5, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(13)
+  doc.setTextColor(...C.AZUL_ESC)
+  doc.text(`ORÇAMENTO  Nº ${numOrc}`, W / 2, y + 6.2, { align: 'center' })
+  y += 13
 
-  y += 10;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(30, 30, 30);
-  doc.text(`Cliente: ${cliente?.nome || "—"}`, margin + 2, y);
-  y += 5;
-  doc.text(`Telefone: ${cliente?.telefone || "—"}`, margin + 2, y);
-  doc.text(`E-mail: ${cliente?.email || "—"}`, margin + 80, y);
-  y += 5;
-  doc.text(`Endereço: ${cliente?.endereco || "—"}`, margin + 2, y);
+  // Faixa de info (data / validade / pagamento)
+  doc.setFillColor(...C.CINZA)
+  doc.rect(MRG, y, W - MRG * 2, 7, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8)
+  doc.setTextColor(...C.TEXTO_SEC)
+  doc.text(`Data: ${dataOrc}`,                      MRG + 3, y + 4.8)
+  doc.text(`Validade: ${validade}`,                  W / 2,   y + 4.8, { align: 'center' })
+  doc.text(`Pagamento: ${orcamento.forma_pagamento || '—'}`, W - MRG - 3, y + 4.8, { align: 'right' })
+  y += 11
 
-  // ── PRODUTOS / SERVIÇOS ────────────────────────────────────
-  y += 9;
-  doc.setFillColor(0, 102, 179);
-  doc.rect(margin, y, W - margin * 2, 6, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text("2 PRODUTOS / SERVIÇOS", margin + 2, y + 4.2);
-  y += 8;
+  // ── 1. DADOS DO CLIENTE ───────────────────────────────────────────────────
+  y = secaoTitulo(doc, '1', 'DADOS DO CLIENTE', y) + 4
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(...C.TEXTO)
+
+  const col2 = W / 2
+  doc.setFont('helvetica', 'bold')
+  doc.text('Cliente:', MRG + 2, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(cliente?.nome || '—', MRG + 18, y)
+  y += 5
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('Telefone:', MRG + 2, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(cliente?.telefone || '—', MRG + 20, y)
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('E-mail:', col2, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(cliente?.email || '—', col2 + 14, y)
+  y += 5
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('Endereço:', MRG + 2, y)
+  doc.setFont('helvetica', 'normal')
+  doc.text(cliente?.endereco || '—', MRG + 21, y)
+  y += 10
+
+  // ── 2. PRODUTOS / SERVIÇOS ────────────────────────────────────────────────
+  y = secaoTitulo(doc, '2', 'PRODUTOS / SERVIÇOS', y) + 2
 
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin },
-    head: [
-      [
-        "Foto",
-        "Descrição",
-        "Tipo de Trabalho",
-        "Qtd (m²)",
-        "Valor Unit. (R$)",
-        "Subtotal (R$)",
-      ],
-    ],
-    body: itens.map((item) => [
-      "",
+    ...TABLE_STYLES,
+    head: [['Foto', 'Descrição', 'Tipo de Trabalho', 'Qtd (m²)', 'Unit. (R$)', 'Subtotal (R$)']],
+    body: itens.map(item => [
+      '',
       item.descricao,
-      item.tipo_trabalho || "—",
-      Number(item.quantidade).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
-      Number(item.valor_unitario).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
-      (Number(item.quantidade) * Number(item.valor_unitario)).toLocaleString(
-        "pt-BR",
-        { minimumFractionDigits: 2 },
-      ),
+      item.tipo_trabalho || '—',
+      Number(item.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      Number(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      (Number(item.quantidade) * Number(item.valor_unitario)).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
     ]),
-    headStyles: {
-      fillColor: [220, 230, 242],
-      textColor: [0, 60, 120],
-      fontStyle: "bold",
-      fontSize: 8.5,
-    },
-    bodyStyles: {
-      fontSize: 8.5,
-      textColor: [30, 30, 30],
-      minCellHeight: IMG_SIZE + 6,
-    },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
     columnStyles: {
-      0: { cellWidth: 22, halign: "center" },
-      1: { cellWidth: "auto" },
-      2: { cellWidth: 32 },
-      3: { cellWidth: 20, halign: "center" },
-      4: { cellWidth: 26, halign: "right" },
-      5: { cellWidth: 26, halign: "right" },
+      0: { cellWidth: 22, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 34 },
+      3: { cellWidth: 20, halign: 'right' },
+      4: { cellWidth: 24, halign: 'right' },
+      5: { cellWidth: 28, halign: 'right' },
     },
+    bodyStyles: { ...TABLE_STYLES.bodyStyles, minCellHeight: IMG_SZ + 6 },
     didDrawCell(data) {
-      if (data.section === "body" && data.column.index === 0) {
-        const img = imagensItens[data.row.index];
-        const cellX = data.cell.x + 2;
-        const cellY = data.cell.y + 2;
-        const size = IMG_SIZE - 2;
-        if (img) {
-          doc.addImage(img, "JPEG", cellX, cellY, size, size);
-        } else {
-          doc.setFillColor(200, 200, 200);
-          doc.rect(cellX, cellY, size, size, "F");
-          doc.setFontSize(6);
-          doc.setTextColor(120, 120, 120);
-          doc.text("Sem foto", cellX + size / 2, cellY + size / 2, {
-            align: "center",
-          });
-        }
+      if (data.section !== 'body' || data.column.index !== 0) return
+      const img = fotos[data.row.index]
+      const cx  = data.cell.x + 2
+      const cy  = data.cell.y + 2
+      const sz  = IMG_SZ - 2
+      if (img) {
+        doc.addImage(img, 'JPEG', cx, cy, sz, sz)
+      } else {
+        doc.setFillColor(210, 210, 210)
+        doc.rect(cx, cy, sz, sz, 'F')
+        doc.setFontSize(5.5)
+        doc.setTextColor(140, 140, 140)
+        doc.text('Sem foto', cx + sz / 2, cy + sz / 2, { align: 'center' })
       }
     },
-  });
+  })
 
-  // ── TOTALIZADORES ──────────────────────────────────────────
-  y = doc.lastAutoTable.finalY + 6;
-  const totalItens = itens.length;
-  const totalM2 = itens.reduce((acc, i) => acc + Number(i.quantidade), 0);
-  const total = itens.reduce(
-    (acc, i) => acc + Number(i.quantidade) * Number(i.valor_unitario),
-    0,
-  );
+  // ── 3. TOTALIZADORES ─────────────────────────────────────────────────────
+  y = doc.lastAutoTable.finalY + 5
 
-  doc.setFillColor(240, 240, 240);
-  doc.rect(margin, y, W - margin * 2, 18, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(60, 60, 60);
-  doc.text(`Soma de Itens: ${totalItens}`, margin + 2, y + 6);
-  doc.text(`Soma das Qtdes: ${totalM2.toFixed(2)} m²`, margin + 2, y + 12);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 60, 120);
-  doc.text("TOTAL GERAL:", W - margin - 58, y + 10);
+  const totalM2  = itens.reduce((a, i) => a + Number(i.quantidade), 0)
+  const total    = itens.reduce((a, i) => a + Number(i.quantidade) * Number(i.valor_unitario), 0)
+
+  // Caixa totalizadora
+  doc.setFillColor(...C.AZUL_CLARO)
+  doc.roundedRect(MRG, y, W - MRG * 2, 14, 1.5, 1.5, 'F')
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(...C.TEXTO_SEC)
+  doc.text(`${itens.length} ${itens.length === 1 ? 'item' : 'itens'}`, MRG + 4, y + 5.5)
+  doc.text(`${totalM2.toFixed(2)} m²`, MRG + 4, y + 10.5)
+
+  doc.setDrawColor(...C.AZUL)
+  doc.setLineWidth(0.5)
+  doc.line(W - MRG - 75, y + 2, W - MRG - 75, y + 12)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...C.AZUL_ESC)
+  doc.text('TOTAL GERAL', W - MRG - 70, y + 6.5)
+  doc.setFontSize(13)
+  doc.setTextColor(...C.AZUL)
   doc.text(
-    `R$ ${total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-    W - margin - 2,
-    y + 10,
-    { align: "right" },
-  );
+    `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+    W - MRG - 4, y + 10.5, { align: 'right' }
+  )
+  y += 19
 
-  y += 24;
-
-  // ── FORMA DE PAGAMENTO ─────────────────────────────────────
+  // ── 4. FORMA DE PAGAMENTO ─────────────────────────────────────────────────
   if (orcamento.forma_pagamento) {
-    y += 4;
-    doc.setFillColor(0, 102, 179);
-    doc.rect(margin, y, W - margin * 2, 6, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(255, 255, 255);
-    doc.text("3 FORMA DE PAGAMENTO", margin + 2, y + 4.2);
-    y += 11;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(30, 30, 30);
-    doc.text(orcamento.forma_pagamento, margin + 2, y);
-    y += 6;
+    y = secaoTitulo(doc, '3', 'FORMA DE PAGAMENTO', y) + 5
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(...C.TEXTO)
+    doc.text(orcamento.forma_pagamento, MRG + 3, y)
+    y += 8
   }
 
-  // ── OBSERVAÇÕES ────────────────────────────────────────────
+  // ── 5. OBSERVAÇÕES ────────────────────────────────────────────────────────
   if (orcamento.observacao) {
-    y += 4;
-    doc.setFillColor(0, 102, 179);
-    doc.rect(margin, y, W - margin * 2, 6, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(255, 255, 255);
-    doc.text("4 OBSERVAÇÕES", margin + 2, y + 4.2);
-    y += 9;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(30, 30, 30);
-    const linhas = doc.splitTextToSize(
-      orcamento.observacao,
-      W - margin * 2 - 4,
-    );
-    doc.text(linhas, margin + 2, y);
-    y += linhas.length * 5 + 4;
+    const num = orcamento.forma_pagamento ? '4' : '3'
+    y = secaoTitulo(doc, num, 'OBSERVAÇÕES', y) + 5
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(...C.TEXTO)
+    const linhas = doc.splitTextToSize(orcamento.observacao, W - MRG * 2 - 4)
+    doc.text(linhas, MRG + 3, y)
+    y += linhas.length * 5 + 6
   }
 
-  // ── DECLARAÇÃO ─────────────────────────────────────────────
-  y += 8;
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  const declaracao =
-    "Declaro ter conferido a quantidade e as condições dos produtos/serviços entregues, dando plena quitação do feito, para mais nada reclamar.";
-  doc.text(doc.splitTextToSize(declaracao, W - margin * 2), margin, y);
+  // ── DECLARAÇÃO ───────────────────────────────────────────────────────────
+  y += 6
+  doc.setFont('helvetica', 'italic')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...C.TEXTO_SEC)
+  const decl = 'Declaro ter conferido a quantidade e as condições dos produtos/serviços entregues, dando plena quitação do feito, para mais nada reclamar.'
+  doc.text(doc.splitTextToSize(decl, W - MRG * 2), MRG, y)
 
-  // ── ASSINATURA ─────────────────────────────────────────────
-  y = Math.max(y + 16, 245);
-  doc.setDrawColor(100, 100, 100);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, margin + 75, y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  doc.text("Assinatura do Cliente", margin, y + 4);
-  doc.text(cliente?.nome || "", margin, y + 8);
+  // ── ASSINATURAS ──────────────────────────────────────────────────────────
+  y = Math.max(y + 18, 248)
+  doc.setDrawColor(...C.TEXTO_SEC)
+  doc.setLineWidth(0.3)
 
-  doc.line(W - margin - 75, y, W - margin, y);
-  doc.text("Assinatura / Carimbo da Empresa", W - margin - 75, y + 4);
-  doc.text("D DO SOCORRO R RIBEIRO LTDA", W - margin - 75, y + 8);
-  doc.text("CNPJ: 06.197.551/0001-73", W - margin - 75, y + 12);
+  doc.line(MRG, y, MRG + 72, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...C.TEXTO_SEC)
+  doc.text('Assinatura do Cliente', MRG, y + 4)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...C.TEXTO)
+  doc.text(cliente?.nome || '', MRG, y + 8)
 
-  // ── RODAPÉ ─────────────────────────────────────────────────
-  doc.setFillColor(0, 102, 179);
-  doc.rect(0, 285, W, 12, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text(
-    "Marcenaria & Marmoraria J.V. — Fone: (91) 3425-2208 — Rodovia Santos Dumont, em frente ao Aeroporto, Bragança - PA",
-    W / 2,
-    290,
-    { align: "center" },
-  );
-  doc.text(
-    `Gerado em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
-    W / 2,
-    294,
-    { align: "center" },
-  );
+  doc.line(W - MRG - 80, y, W - MRG, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...C.TEXTO_SEC)
+  doc.text('Assinatura / Carimbo da Empresa', W - MRG - 80, y + 4)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...C.TEXTO)
+  doc.text(EMPRESA.razao,            W - MRG - 80, y + 8)
+  doc.text(`CNPJ: ${EMPRESA.cnpj}`, W - MRG - 80, y + 12)
 
-  doc.save(
-    `Orcamento_${numOrc}_${(cliente?.nome || "cliente").replace(/\s+/g, "_")}.pdf`,
-  );
+  // ── RODAPÉS ──────────────────────────────────────────────────────────────
+  aplicarRodapes(doc)
+
+  doc.save(`Orcamento_${numOrc}_${(cliente?.nome || 'cliente').replace(/\s+/g, '_')}.pdf`)
 }
