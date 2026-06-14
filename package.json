@@ -1,7 +1,9 @@
 {
     "name": "marmoraria-app",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
+    "description": "ERP para marmoraria — estoque, vendas, orçamentos, clientes e mais.",
+    "author": "Marmoraria JV",
     "type": "module",
     "main": "electron/main.cjs",
     "scripts": {
