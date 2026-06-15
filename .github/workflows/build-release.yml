@@ -3,6 +3,7 @@ name: Build & Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────────────
@@ -20,6 +21,12 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+
+      - name: Definir versão automática
+        run: |
+          $majorMinor = node -p "require('./package.json').version.split('.').slice(0,2).join('.')"
+          $version = "$majorMinor.${{ github.run_number }}"
+          npm version $version --no-git-tag-version
 
       - name: Gerar icon.ico com tamanhos corretos
         run: |
@@ -78,6 +85,12 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Definir versão automática
+        run: |
+          MAJOR_MINOR=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          VERSION="${MAJOR_MINOR}.${{ github.run_number }}"
+          npm version $VERSION --no-git-tag-version
+
       - name: Build web assets
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -134,6 +147,36 @@ jobs:
           path: apk-out/*.apk
 
   # ─────────────────────────────────────────────────
+  # VERCEL — deploy web/PWA em paralelo com os builds
+  # ─────────────────────────────────────────────────
+  vercel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Deploy no Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npx vercel --token "$VERCEL_TOKEN" \
+            --yes \
+            --prod \
+            --scope team_P21Vcp7qK3KPGfKoDyXELA9n \
+            -e VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
+            -e VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY"
+        working-directory: .
+
+  # ─────────────────────────────────────────────────
   # RELEASE — só roda após AMBOS os builds terminarem
   # ─────────────────────────────────────────────────
   release:
@@ -160,7 +203,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          MAJOR_MINOR=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          VERSION="${MAJOR_MINOR}.${{ github.run_number }}"
           gh release create latest \
             --title "Marmoraria JV v${VERSION} — Download" \
             --notes $'## Instaladores\n\n**Windows** → baixe o `.exe` e execute para instalar\n\n**Android** → baixe o `.apk`, transfira para o celular, ative *Fontes desconhecidas* e instale\n\n---\nAtualizado automaticamente a cada alteração.' \
