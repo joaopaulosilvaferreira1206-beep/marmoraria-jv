@@ -5,6 +5,7 @@ import {
   novoDoc, carregarLogo,
   desenharCabecalho, TABLE_STYLES, aplicarRodapes,
 } from './pdfBase'
+import { salvarArquivo } from './salvarArquivo'
 
 // ─── Helper interno: doc com cabeçalho já desenhado ──────────────────────────
 async function iniciarDoc(tituloSecao, subtitulo = '') {
@@ -91,7 +92,7 @@ export async function exportarVendasPDF(vendas, periodo = '') {
   })
 
   aplicarRodapes(doc)
-  doc.save(`Relatorio_Vendas${periodo ? '_' + periodo.replace(/\s*\/\s*/g, '-') : ''}.pdf`)
+  await salvarArquivo(doc.output('arraybuffer'), `Relatorio_Vendas${periodo ? '_' + periodo.replace(/\s*\/\s*/g, '-') : ''}.pdf`)
 }
 
 // ─── Relatório de Estoque ────────────────────────────────────────────────────
@@ -155,7 +156,7 @@ export async function exportarEstoquePDF(materiais) {
   })
 
   aplicarRodapes(doc)
-  doc.save(`Relatorio_Estoque_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
+  await salvarArquivo(doc.output('arraybuffer'), `Relatorio_Estoque_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
 }
 
 // ─── Relatório de Clientes ───────────────────────────────────────────────────
@@ -186,11 +187,11 @@ export async function exportarClientesPDF(clientes) {
   })
 
   aplicarRodapes(doc)
-  doc.save(`Relatorio_Clientes_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
+  await salvarArquivo(doc.output('arraybuffer'), `Relatorio_Clientes_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
 }
 
 // ─── EXCEL (sem alteração de lógica, mantidos) ───────────────────────────────
-export function exportarVendasExcel(vendas, periodo = '') {
+export async function exportarVendasExcel(vendas, periodo = '') {
   const dados = vendas.map(v => ({
     'Data':               new Date(v.data).toLocaleDateString('pt-BR'),
     'Cliente':            v.clientes?.nome || '—',
@@ -202,10 +203,10 @@ export function exportarVendasExcel(vendas, periodo = '') {
   const ws = XLSX.utils.json_to_sheet(dados)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Vendas')
-  XLSX.writeFile(wb, `Vendas${periodo ? '_' + periodo : ''}.xlsx`)
+  await salvarArquivo(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), `Vendas${periodo ? '_' + periodo : ''}.xlsx`)
 }
 
-export function exportarEstoqueExcel(materiais) {
+export async function exportarEstoqueExcel(materiais) {
   const dados = materiais.map(m => ({
     'SKU':             m.sku,
     'Descrição':       m.descricao,
@@ -219,10 +220,10 @@ export function exportarEstoqueExcel(materiais) {
   const ws = XLSX.utils.json_to_sheet(dados)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Estoque')
-  XLSX.writeFile(wb, `Estoque_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`)
+  await salvarArquivo(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), `Estoque_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`)
 }
 
-export function exportarClientesExcel(clientes) {
+export async function exportarClientesExcel(clientes) {
   const dados = clientes.map(c => ({
     'Nome':      c.nome,
     'Telefone':  c.telefone || '—',
@@ -232,5 +233,5 @@ export function exportarClientesExcel(clientes) {
   const ws = XLSX.utils.json_to_sheet(dados)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Clientes')
-  XLSX.writeFile(wb, `Clientes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`)
+  await salvarArquivo(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), `Clientes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`)
 }

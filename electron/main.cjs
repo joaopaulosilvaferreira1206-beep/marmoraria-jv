@@ -55,6 +55,21 @@ ipcMain.handle('listar-backups', async () => {
     }
 })
 
+// Salvar arquivo com diálogo nativo
+ipcMain.handle('salvar-arquivo', async (_, { buffer, defaultName }) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+        defaultPath: defaultName,
+        filters: [
+            { name: 'PDF',   extensions: ['pdf']  },
+            { name: 'Excel', extensions: ['xlsx'] },
+            { name: 'Todos', extensions: ['*']    },
+        ],
+    })
+    if (canceled || !filePath) return { ok: false }
+    fs.writeFileSync(filePath, Buffer.from(buffer))
+    return { ok: true, filePath }
+})
+
 // Ler backup específico
 ipcMain.handle('ler-backup', async (_, caminho) => {
     try {

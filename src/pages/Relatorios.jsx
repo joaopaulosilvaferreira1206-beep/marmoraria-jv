@@ -5,6 +5,7 @@ import SelectBusca from "../components/SelectBusca";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { salvarArquivo } from "../lib/salvarArquivo";
 import {
   Search,
   TrendingUp,
@@ -139,7 +140,7 @@ export default function Relatorios() {
     setLoading(false);
   }
 
-  function exportarPDF() {
+  async function exportarPDF() {
     if (!relatorio) return;
     const doc = new jsPDF();
     const W = doc.internal.pageSize.getWidth();
@@ -420,10 +421,10 @@ export default function Relatorios() {
         { align: "center" },
       );
     }
-    doc.save(`relatorio_${filtroAtivo}_${dataInicio}_${dataFim}.pdf`);
+    await salvarArquivo(doc.output('arraybuffer'), `relatorio_${filtroAtivo}_${dataInicio}_${dataFim}.pdf`);
   }
 
-  function exportarExcel() {
+  async function exportarExcel() {
     if (!relatorio) return;
     const wb = XLSX.utils.book_new();
     const mostrarVendas = filtroAtivo === "todos" || filtroAtivo === "vendas";
@@ -474,10 +475,7 @@ export default function Relatorios() {
         "Perdas",
       );
 
-    XLSX.writeFile(
-      wb,
-      `relatorio_${filtroAtivo}_${dataInicio}_${dataFim}.xlsx`,
-    );
+    await salvarArquivo(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), `relatorio_${filtroAtivo}_${dataInicio}_${dataFim}.xlsx`);
   }
 
   const mostrarVendas = filtroAtivo === "todos" || filtroAtivo === "vendas";

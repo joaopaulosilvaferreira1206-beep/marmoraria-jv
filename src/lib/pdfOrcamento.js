@@ -4,6 +4,7 @@ import {
   novoDoc, carregarLogo, carregarImagemBase64,
   desenharCabecalho, secaoTitulo, TABLE_STYLES, aplicarRodapes,
 } from './pdfBase'
+import { salvarArquivo } from './salvarArquivo'
 
 const IMG_SZ = 16
 
@@ -211,5 +212,5 @@ export async function gerarPDFOrcamento(orcamento, itens, cliente) {
   // ── RODAPÉS ──────────────────────────────────────────────────────────────
   aplicarRodapes(doc)
 
-  doc.save(`Orcamento_${numOrc}_${(cliente?.nome || 'cliente').replace(/\s+/g, '_')}.pdf`)
+  await salvarArquivo(doc.output('arraybuffer'), `Orcamento_${numOrc}_${(cliente?.nome || 'cliente').replace(/\s+/g, '_')}.pdf`)
 }
