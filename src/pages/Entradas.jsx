@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatarDataHora } from '../lib/formatarData'
 import { Plus, X, Image } from 'lucide-react'
@@ -246,8 +246,8 @@ export default function Entradas() {
 
             {/* Modal Registrar Entrada */}
             {modal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center z-50 p-4">
+                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto my-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Registrar Entrada</h3>
                             <button onClick={() => setModal(false)} className="text-gray-400 hover:text-gray-200"><X size={20} /></button>
@@ -336,8 +336,8 @@ export default function Entradas() {
 
             {/* Modal Novo Material */}
             {modalMaterial && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm">
+                <div className="fixed inset-0 bg-black bg-opacity-60 overflow-y-auto flex items-start justify-center z-[60] p-4">
+                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Novo Material</h3>
                             <button onClick={() => { setModalMaterial(false); setFotoFile(null); setFotoPreview(null) }} className="text-gray-400 hover:text-gray-200">
@@ -430,8 +430,8 @@ export default function Entradas() {
 
             {/* Modal Novo Fornecedor */}
             {modalFornecedor && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm">
+                <div className="fixed inset-0 bg-black bg-opacity-60 overflow-y-auto flex items-start justify-center z-[60]">
+                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Novo Fornecedor</h3>
                             <button onClick={() => { setModalFornecedor(false); setFormFornecedor({ nome: '', telefone: '', email: '', endereco: '' }) }} className="text-gray-400 hover:text-gray-200">

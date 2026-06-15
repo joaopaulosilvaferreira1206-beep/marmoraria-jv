@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Plus, Pencil, Trash2, X, Image } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
@@ -365,8 +365,8 @@ export default function Estoque() {
 
       {/* Modal cadastro/edição */}
       {modal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md border border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md border border-gray-700 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-100">
                 {editando ? "Editar Material" : "Novo Material"}
@@ -559,7 +559,7 @@ export default function Estoque() {
       {/* Modal visualizar imagem */}
       {modalImagem && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-80 overflow-y-auto flex items-start justify-center z-50 p-4"
           onClick={() => setModalImagem(null)}
         >
           <div
