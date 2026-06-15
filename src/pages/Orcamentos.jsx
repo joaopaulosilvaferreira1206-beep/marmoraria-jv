@@ -321,7 +321,7 @@ function FormItens({
                 </td>
                 <td className="px-3 py-2">
                   <button
-                    onClick={() => onRemover(i)}
+                    onClick={() => onRemover(item)}
                     className="text-red-400 hover:text-red-300"
                   >
                     <Trash2 size={14} />

@@ -75,7 +75,8 @@ export default function SelectBusca({
     rafId = requestAnimationFrame(loop);
 
     if (!manterAberto) {
-      function handleScroll() {
+      function handleScroll(e) {
+        if (ref.current && ref.current.contains(e.target)) return;
         setAberto(false);
         setBusca("");
         if (onToggle) onToggle(false);
