@@ -128,21 +128,20 @@ jobs:
             echo '}'
           } > android/capacitor-cordova-android-plugins/build.gradle
 
-      - name: Decodificar keystore
+      - name: Configurar keystore e signing
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
+          echo "KEYSTORE_PATH=keystore.jks" >> android/gradle.properties
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/gradle.properties
+          echo "KEYSTORE_ALIAS=${{ secrets.KEYSTORE_ALIAS }}" >> android/gradle.properties
 
       - name: Build APK (release assinado)
         working-directory: android
-        env:
-          KEYSTORE_PATH: keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          BUILD_NUMBER: ${{ github.run_number }}
-          APP_VERSION: ${{ env.APP_VERSION }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease \
+            -PBUILD_NUMBER=${{ github.run_number }} \
+            -PAPP_VERSION=${{ env.APP_VERSION }}
 
       - name: Preparar APK
         run: |
