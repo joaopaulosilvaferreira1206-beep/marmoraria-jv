@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const fs = require('fs')
 
@@ -108,6 +109,22 @@ function createWindow() {
 app.whenReady().then(() => {
     app.setAppUserModelId('com.marmorariajv.gestao')
     createWindow()
+
+    if (!isDev) {
+        autoUpdater.checkForUpdates()
+        autoUpdater.on('update-downloaded', () => {
+            dialog.showMessageBox({
+                type: 'info',
+                title: 'Atualização disponível',
+                message: 'Nova versão baixada. O aplicativo será reiniciado para instalar a atualização.',
+                buttons: ['Reiniciar agora', 'Mais tarde'],
+                defaultId: 0,
+            }).then(({ response }) => {
+                if (response === 0) autoUpdater.quitAndInstall()
+            })
+        })
+    }
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })

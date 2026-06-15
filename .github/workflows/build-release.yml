@@ -21,6 +21,23 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Gerar icon.ico com tamanhos corretos
+        run: |
+          node -e "
+          const { Jimp } = require('jimp')
+          const { default: pngToIco } = require('png-to-ico')
+          const fs = require('fs')
+          ;(async () => {
+            const img = await Jimp.read('public/icon-512.png')
+            const sizes = [16,32,48,64,128,256]
+            const buffers = await Promise.all(sizes.map(s => img.clone().resize({w:s,h:s}).getBuffer('image/png')))
+            const ico = await pngToIco(buffers)
+            fs.writeFileSync('icon.ico', ico)
+            fs.writeFileSync('public/icon.ico', ico)
+            console.log('icon.ico gerado:', ico.length, 'bytes')
+          })().catch(e => { console.error(e); process.exit(1) })
+          "
+
       - name: Build web + instalador Windows
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -29,11 +46,16 @@ jobs:
           npm run build
           npm run build:desktop
 
-      - name: Upload instalador
+      - name: Gerar latest.yml para auto-update
+        run: node scripts/generate-latest-yml.cjs
+
+      - name: Upload instalador + latest.yml
         uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/latest.yml
 
   # ─────────────────────────────────────────────────
   # ANDROID — APK via Capacitor + Gradle
@@ -137,7 +159,7 @@ jobs:
           gh release delete latest --yes 2>/dev/null || true
           git push --delete origin latest 2>/dev/null || true
 
-      - name: Publicar release com os dois instaladores
+      - name: Publicar release com instaladores e latest.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -147,4 +169,5 @@ jobs:
             --notes $'## Instaladores\n\n**Windows** → baixe o `.exe` e execute para instalar\n\n**Android** → baixe o `.apk`, transfira para o celular, ative *Fontes desconhecidas* e instale\n\n---\nAtualizado automaticamente a cada alteração.' \
             --latest \
             artifacts/windows/*.exe \
+            artifacts/windows/latest.yml \
             artifacts/android/*.apk

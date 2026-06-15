@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 /* global process */
+import { readFileSync } from 'fs'
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'))
+
 export default defineConfig(() => {
   const isElectron = process.env.BUILD_TARGET === 'electron'
 
@@ -34,6 +37,9 @@ export default defineConfig(() => {
         }
       })
     ].filter(Boolean),
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     build: {
       rollupOptions: {
         output: {

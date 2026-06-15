@@ -89,6 +89,7 @@ function Layout({ onLogout }) {
 
 function App() {
   const { sessao, loading, logout } = useAuth()
+  const [atualizacaoApk, setAtualizacaoApk] = useState(null)
 
   useEffect(() => {
     if (!sessao) return
@@ -105,6 +106,23 @@ function App() {
     return () => window.removeEventListener('online', sincronizar)
   }, [])
 
+  // Verificação de atualização para Android (APK sideloaded)
+  useEffect(() => {
+    if (window.electronAPI) return // Electron tem auto-update nativo
+    fetch('https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest')
+      .then(r => r.json())
+      .then(release => {
+        const nova = release.assets?.find(a => a.name?.endsWith('.apk'))
+        if (!nova) return
+        const versaoNova = release.tag_name?.replace(/^v/, '') || ''
+        const versaoAtual = __APP_VERSION__
+        if (versaoNova && versaoNova !== versaoAtual) {
+          setAtualizacaoApk({ versao: versaoNova, url: nova.browser_download_url })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -118,6 +136,27 @@ function App() {
   return (
     <PopupProvider>
       <HashRouter>
+        {atualizacaoApk && (
+          <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+            <span className="text-sm font-medium">Nova versão {atualizacaoApk.versao} disponível!</span>
+            <div className="flex gap-2">
+              <a
+                href={atualizacaoApk.url}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                Baixar APK
+              </a>
+              <button
+                onClick={() => setAtualizacaoApk(null)}
+                className="text-blue-200 hover:text-white text-xs px-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         <Layout onLogout={logout} />
       </HashRouter>
     </PopupProvider>
