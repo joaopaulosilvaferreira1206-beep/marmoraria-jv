@@ -88,7 +88,7 @@ export default function Dashboard() {
         (m) => m.minimo && m.saldo <= m.minimo,
       );
       const vendasMes = (vendasAno || [])
-        .filter((v) => new Date(v.data).getMonth() === mesAtual)
+        .filter((v) => Number(v.data?.slice(5, 7)) - 1 === mesAtual)
         .reduce((acc, v) => acc + (v.valor_total || 0), 0);
 
       setResumo({
@@ -129,8 +129,8 @@ export default function Dashboard() {
         agrupado[chave] = { mes: meses[d.getMonth()], total: 0 };
       }
       vendasAno.forEach((v) => {
-        const d = new Date(v.data);
-        const chave = `${d.getFullYear()}-${d.getMonth()}`;
+        const [ano, mes] = v.data.split('-').map(Number)
+        const chave = `${ano}-${mes - 1}`
         if (agrupado[chave]) agrupado[chave].total += v.valor_total || 0;
       });
       setVendasPorMes(Object.values(agrupado));

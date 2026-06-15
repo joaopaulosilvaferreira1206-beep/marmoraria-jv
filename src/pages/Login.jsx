@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Eye, EyeOff } from 'lucide-react'
 
-export default function Login({ onLogin }) {
+export default function Login() {
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [loading, setLoading] = useState(false)
@@ -21,8 +21,6 @@ export default function Login({ onLogin }) {
 
         if (error) {
             setErro('Email ou senha incorretos.')
-        } else {
-            onLogin()
         }
         setLoading(false)
     }
