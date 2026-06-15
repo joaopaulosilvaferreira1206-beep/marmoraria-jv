@@ -1,8 +1,10 @@
 import { useLocation } from "react-router-dom";
-import { Menu, Download, Search } from "lucide-react";
+import { Menu, Download, Search, WifiOff, CloudUpload } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "/icon-192.png";
 import BuscaGlobal from "./BuscaGlobal";
+import { useOnline } from "../lib/useOnline";
+import { tamanhoFila } from "../lib/offlineSync";
 
 const titulos = {
   "/": "Dashboard",
@@ -25,6 +27,15 @@ export default function Header({ onMenuClick }) {
   const [promptInstalacao, setPromptInstalacao] = useState(null);
   const [podeInstalar, setPodeInstalar] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
+  const online = useOnline();
+  const [pendentes, setPendentes] = useState(0);
+
+  useEffect(() => {
+    function atualizar() { tamanhoFila().then(setPendentes) }
+    atualizar()
+    window.addEventListener('sync-queue-changed', atualizar)
+    return () => window.removeEventListener('sync-queue-changed', atualizar)
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -83,6 +94,21 @@ export default function Header({ onMenuClick }) {
               Ctrl K
             </span>
           </button>
+
+          {/* Indicador offline / sincronização pendente */}
+          {!online && (
+            <div className="flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs px-2.5 py-1.5 rounded-lg">
+              <WifiOff size={14} />
+              <span className="hidden sm:inline">Offline</span>
+              {pendentes > 0 && <span className="font-bold">· {pendentes} pend.</span>}
+            </div>
+          )}
+          {online && pendentes > 0 && (
+            <div className="flex items-center gap-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs px-2.5 py-1.5 rounded-lg animate-pulse">
+              <CloudUpload size={14} />
+              <span className="hidden sm:inline">Sincronizando…</span>
+            </div>
+          )}
 
           {podeInstalar && (
             <button

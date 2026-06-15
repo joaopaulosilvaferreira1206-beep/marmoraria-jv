@@ -14,6 +14,7 @@ import Entradas from './pages/Entradas'
 import Perdas from './pages/Perdas'
 import Pedidos from './pages/Pedidos'
 import { PopupProvider } from './components/PopupProvider'
+import { sincronizar } from './lib/offlineSync'
 import Orcamentos from './pages/Orcamentos'
 import Relatorios from './pages/Relatorios'
 import Backup from './pages/Backup'
@@ -81,6 +82,13 @@ function App() {
     const intervalo = setInterval(() => gerarBackup(), 24 * 60 * 60 * 1000)
     return () => clearInterval(intervalo)
   }, [sessao])
+
+  // Sincroniza fila offline sempre que recuperar conexão
+  useEffect(() => {
+    window.addEventListener('online', sincronizar)
+    sincronizar() // tenta na inicialização também
+    return () => window.removeEventListener('online', sincronizar)
+  }, [])
 
   if (loading) {
     return (
