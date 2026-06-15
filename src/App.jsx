@@ -1,24 +1,37 @@
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useAuth } from './lib/AuthContext'
 import { gerarBackup } from './lib/backup'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Estoque from './pages/Estoque'
-import Vendas from './pages/Vendas'
-import Clientes from './pages/Clientes'
-import Fornecedores from './pages/Fornecedores'
-import Entradas from './pages/Entradas'
-import Perdas from './pages/Perdas'
-import Pedidos from './pages/Pedidos'
 import { PopupProvider } from './components/PopupProvider'
 import { sincronizar } from './lib/offlineSync'
-import Orcamentos from './pages/Orcamentos'
-import Relatorios from './pages/Relatorios'
-import Backup from './pages/Backup'
-import Usuarios from './pages/Usuarios'
+
+// Lazy load: cada página vira chunk separado — só baixa quando o usuário navega
+const Dashboard    = lazy(() => import('./pages/Dashboard'))
+const Estoque      = lazy(() => import('./pages/Estoque'))
+const Vendas       = lazy(() => import('./pages/Vendas'))
+const Clientes     = lazy(() => import('./pages/Clientes'))
+const Fornecedores = lazy(() => import('./pages/Fornecedores'))
+const Entradas     = lazy(() => import('./pages/Entradas'))
+const Perdas       = lazy(() => import('./pages/Perdas'))
+const Pedidos      = lazy(() => import('./pages/Pedidos'))
+const Orcamentos   = lazy(() => import('./pages/Orcamentos'))
+const Relatorios   = lazy(() => import('./pages/Relatorios'))
+const Backup       = lazy(() => import('./pages/Backup'))
+const Usuarios     = lazy(() => import('./pages/Usuarios'))
+
+function PageLoader() {
+  return (
+    <div className="flex flex-col gap-3 p-2 animate-pulse">
+      <div className="h-10 bg-gray-700 rounded-xl w-1/3" />
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="h-12 bg-gray-700/60 rounded-xl" />
+      ))}
+    </div>
+  )
+}
 
 function AcessoNegado() {
   const navigate = useNavigate()
@@ -46,26 +59,28 @@ function Layout({ onLogout }) {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         <Header onMenuClick={() => setSidebarAberta(true)} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-900">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/estoque" element={<Estoque />} />
-            <Route path="/entradas" element={<Entradas />} />
-            <Route path="/vendas" element={<Vendas />} />
-            <Route path="/perdas" element={<Perdas />} />
-            <Route path="/clientes" element={<Clientes />} />
-            <Route path="/fornecedores" element={<Fornecedores />} />
-            <Route path="/orcamentos" element={<Orcamentos />} />
-            <Route path="/pedidos" element={<Pedidos />} />
-            <Route path="/relatorios" element={
-              pode.verRelatorios ? <Relatorios /> : <AcessoNegado />
-            } />
-            <Route path="/backup" element={
-              pode.acessarBackup ? <Backup /> : <AcessoNegado />
-            } />
-            <Route path="/usuarios" element={
-              pode.gerenciarUsuarios ? <Usuarios /> : <AcessoNegado />
-            } />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/estoque" element={<Estoque />} />
+              <Route path="/entradas" element={<Entradas />} />
+              <Route path="/vendas" element={<Vendas />} />
+              <Route path="/perdas" element={<Perdas />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/fornecedores" element={<Fornecedores />} />
+              <Route path="/orcamentos" element={<Orcamentos />} />
+              <Route path="/pedidos" element={<Pedidos />} />
+              <Route path="/relatorios" element={
+                pode.verRelatorios ? <Relatorios /> : <AcessoNegado />
+              } />
+              <Route path="/backup" element={
+                pode.acessarBackup ? <Backup /> : <AcessoNegado />
+              } />
+              <Route path="/usuarios" element={
+                pode.gerenciarUsuarios ? <Usuarios /> : <AcessoNegado />
+              } />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </div>
@@ -86,7 +101,7 @@ function App() {
   // Sincroniza fila offline sempre que recuperar conexão
   useEffect(() => {
     window.addEventListener('online', sincronizar)
-    sincronizar() // tenta na inicialização também
+    sincronizar()
     return () => window.removeEventListener('online', sincronizar)
   }, [])
 
