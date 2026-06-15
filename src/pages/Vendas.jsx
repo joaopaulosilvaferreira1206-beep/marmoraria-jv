@@ -633,7 +633,7 @@ export default function Vendas() {
 
       {/* Modal Nova Venda */}
       {modal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex items-start justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-100">
@@ -751,7 +751,7 @@ export default function Vendas() {
 
       {/* Modal Novo Cliente */}
       {modalCliente && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 overflow-y-auto flex items-start justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-100">
