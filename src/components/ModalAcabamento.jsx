@@ -63,11 +63,11 @@ const ACABAMENTOS = [
   },
   {
     nome: "Boleado Duplo c/ Div.",
-    svg: <svg viewBox="0 0 60 45" fill="none"><rect x="5" y="4" width="36" height="7" rx="1" fill="#ef4444" /><ellipse cx="41" cy="4" rx="6" ry="7" fill="#ef4444" /><rect x="5" y="14" width="50" height="2" rx="1" fill="#94a3b8" /><rect x="5" y="19" width="36" height="7" rx="1" fill="#ef4444" /><ellipse cx="41" cy="19" rx="6" ry="7" fill="#ef4444" /></svg>,
+    svg: <svg viewBox="0 0 60 45" fill="none"><rect x="5" y="4" width="36" height="7" rx="1" fill="#ef4444" /><ellipse cx="41" cy="4" rx="6" ry="7" fill="#ef4444" /><rect x="5" y="13" width="18" height="4" rx="1" fill="#ef4444" /><rect x="5" y="19" width="36" height="7" rx="1" fill="#ef4444" /><ellipse cx="41" cy="19" rx="6" ry="7" fill="#ef4444" /></svg>,
   },
   {
     nome: "Boleado Triplo c/ Div.",
-    svg: <svg viewBox="0 0 60 55" fill="none"><rect x="5" y="3" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="3" rx="5" ry="6" fill="#ef4444" /><rect x="5" y="12" width="50" height="2" rx="1" fill="#94a3b8" /><rect x="5" y="17" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="17" rx="5" ry="6" fill="#ef4444" /><rect x="5" y="26" width="50" height="2" rx="1" fill="#94a3b8" /><rect x="5" y="31" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="31" rx="5" ry="6" fill="#ef4444" /></svg>,
+    svg: <svg viewBox="0 0 60 55" fill="none"><rect x="5" y="3" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="3" rx="5" ry="6" fill="#ef4444" /><rect x="5" y="11" width="18" height="3" rx="1" fill="#ef4444" /><rect x="5" y="16" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="16" rx="5" ry="6" fill="#ef4444" /><rect x="5" y="24" width="18" height="3" rx="1" fill="#ef4444" /><rect x="5" y="29" width="34" height="6" rx="1" fill="#ef4444" /><ellipse cx="39" cy="29" rx="5" ry="6" fill="#ef4444" /></svg>,
   },
   {
     nome: "Sanduíche Recuado",
