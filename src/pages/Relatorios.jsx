@@ -961,8 +961,8 @@ export default function Relatorios() {
                           <p className="text-gray-400 text-xs mb-1">
                             Materiais:
                           </p>
-                          {v.itens_venda.map((item, i) => (
-                            <p key={i} className="text-gray-300 text-sm">
+                          {v.itens_venda.map((item) => (
+                            <p key={item.material_id} className="text-gray-300 text-sm">
                               • {item.materiais?.descricao} — {item.quantidade}{" "}
                               m² × R${" "}
                               {(item.valor_unitario || 0).toLocaleString(

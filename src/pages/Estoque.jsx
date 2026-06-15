@@ -18,7 +18,6 @@ export default function Estoque() {
   const { pode } = useAuth();
   const popup = usePopup();
   const [materiais, setMateriais] = useState([]);
-  const [busca] = useState("");
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(materialVazio);
@@ -218,11 +217,7 @@ export default function Estoque() {
     setModal(true);
   }
 
-  const filtrados = materiais.filter(
-    (m) =>
-      m.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-      String(m.sku).includes(busca),
-  );
+  const filtrados = materiais
 
   return (
     <div className="space-y-4">

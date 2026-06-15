@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { formatarDataHora } from '../lib/formatarData'
 import { Plus, X, Trash2 } from 'lucide-react'
 import { usePopup } from '../components/PopupProvider'
 import { emitirEstoqueAtualizado } from '../lib/estoqueEvents'
@@ -99,6 +100,7 @@ export default function Pedidos() {
             setItens(atualizados)
         } else {
             setItens([...itens, {
+                _key: crypto.randomUUID(),
                 material_id: material.id,
                 descricao: material.descricao,
                 unidade: material.unidade || 'm²',
@@ -194,14 +196,6 @@ export default function Pedidos() {
         return 'bg-blue-900/30 text-blue-400'
     }
 
-    function formatarDataHora(registro) {
-        const valor = registro.criado_em || registro.data
-        if (!valor) return '—'
-        return new Date(valor).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-        })
-    }
 
     return (
         <div className="space-y-4">
@@ -242,8 +236,8 @@ export default function Pedidos() {
                                 <td className="px-4 py-3 text-center text-gray-400">
                                     {(p.itens_pedido || []).length === 0 ? '—' : (
                                         <div className="flex flex-col gap-1">
-                                            {p.itens_pedido.map((item, i) => (
-                                                <span key={i} className="text-xs">
+                                            {p.itens_pedido.map((item) => (
+                                                <span key={item.material_id} className="text-xs">
                                                     {item.materiais?.descricao}
                                                 </span>
                                             ))}
@@ -390,7 +384,7 @@ export default function Pedidos() {
                                     </thead>
                                     <tbody>
                                         {itens.map((item, i) => (
-                                            <tr key={i} className="border-t border-gray-700">
+                                            <tr key={item._key ?? item.material_id} className="border-t border-gray-700">
                                                 <td className="px-3 py-2 text-gray-200">{item.descricao}</td>
                                                 <td className="px-3 py-2 text-gray-200">{item.quantidade}</td>
                                                 <td className="px-3 py-2 text-gray-200">{item.unidade}</td>

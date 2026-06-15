@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatarDataHora } from '../lib/formatarData'
 import { Plus, X } from 'lucide-react'
 import { usePopup } from '../components/PopupProvider'
 import { emitirEstoqueAtualizado } from '../lib/estoqueEvents'
@@ -81,15 +82,6 @@ export default function Perdas() {
         setModal(false)
         setForm(perdaVazia)
         carregarDados()
-    }
-
-    function formatarDataHora(registro) {
-        const valor = registro.criado_em || registro.data
-        if (!valor) return '—'
-        return new Date(valor).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-        })
     }
 
     return (

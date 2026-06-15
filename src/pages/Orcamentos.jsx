@@ -291,8 +291,8 @@ function FormItens({
             </tr>
           </thead>
           <tbody>
-            {itens.map((item, i) => (
-              <tr key={i} className="border-t border-gray-700">
+            {itens.map((item) => (
+              <tr key={item._key} className="border-t border-gray-700">
                 <td className="px-3 py-2">
                   {item.tipo_trabalho ? (
                     <span className="inline-block bg-blue-900/40 text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
@@ -544,6 +544,7 @@ export default function Orcamentos() {
     setItens((prev) => [
       ...prev,
       {
+        _key: crypto.randomUUID(),
         material_id: itemForm.material_id,
         descricao: mat?.descricao || "",
         quantidade: Number(itemForm.quantidade),
@@ -586,8 +587,7 @@ export default function Orcamentos() {
       .select("id")
       .single();
     if (error || !orc?.id) {
-      popup.showError("Erro ao salvar orçamento. Verifique o console.");
-      console.error(error);
+      popup.showError("Erro ao salvar orçamento. Tente novamente.");
       return;
     }
     await supabase.from("itens_orcamento").insert(
@@ -795,7 +795,7 @@ export default function Orcamentos() {
                     className={`border-b border-gray-700 hover:bg-gray-700 ${rowClass}`}
                   >
                     <td className="px-4 py-3 text-center text-gray-400">
-                      {new Date(o.data).toLocaleDateString("pt-BR")}
+                      {o.data?.split('-').reverse().join('/')}
                     </td>
                     <td className="px-4 py-3 text-center text-gray-400">
                       {o.clientes?.nome || "—"}
@@ -805,9 +805,9 @@ export default function Orcamentos() {
                         "—"
                       ) : (
                         <div className="flex flex-col gap-1.5">
-                          {o.itens_orcamento.map((item, i) => (
+                          {o.itens_orcamento.map((item) => (
                             <div
-                              key={i}
+                              key={item.material_id}
                               className="inline-flex items-center gap-1.5 flex-nowrap whitespace-nowrap"
                             >
                               <span className="text-xs text-gray-300">

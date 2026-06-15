@@ -21,7 +21,6 @@ export default function Clientes() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(clienteVazio);
   const [editando, setEditando] = useState(null);
-  const [busca] = useState("");
   const { itemDestacado } = useBusca();
   const rowRefs = useRef({});
 
@@ -122,11 +121,7 @@ export default function Clientes() {
     setModal(true);
   }
 
-  const filtrados = clientes.filter(
-    (c) =>
-      c.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      (c.telefone || "").includes(busca),
-  );
+  const filtrados = clientes
 
   return (
     <div className="space-y-4">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { formatarDataHora } from "../lib/formatarData";
 import { Plus, X, Trash2 } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
 import { emitirEstoqueAtualizado } from "../lib/estoqueEvents";
@@ -212,8 +213,8 @@ function FormItensVenda({
             </tr>
           </thead>
           <tbody>
-            {itens.map((item, i) => (
-              <tr key={i} className="border-t border-gray-700">
+            {itens.map((item) => (
+              <tr key={item._key} className="border-t border-gray-700">
                 <td className="px-3 py-2 text-gray-200">{item.descricao}</td>
                 <td className="px-3 py-2">
                   {item.tipo_trabalho ? (
@@ -393,6 +394,7 @@ export default function Vendas() {
     setItens((prev) => [
       ...prev,
       {
+        _key: crypto.randomUUID(),
         material_id: itemForm.material_id,
         descricao: mat?.descricao || "",
         quantidade: Number(itemForm.quantidade),
@@ -511,20 +513,6 @@ export default function Vendas() {
     carregarDados();
   }
 
-  function formatarDataHora(registro) {
-    const valor = registro.criado_em || registro.data;
-    if (!valor) return "—";
-    const valorUTC = valor.endsWith("Z") ? valor : valor + "Z";
-    return new Date(valorUTC).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "America/Sao_Paulo",
-    });
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -603,9 +591,9 @@ export default function Vendas() {
                       "—"
                     ) : (
                       <div className="flex flex-col gap-1.5">
-                        {v.itens_venda.map((item, i) => (
+                        {v.itens_venda.map((item) => (
                           <div
-                            key={i}
+                            key={item.material_id}
                             className="inline-flex items-center gap-1.5 flex-nowrap whitespace-nowrap"
                           >
                             <span className="text-xs text-gray-300">

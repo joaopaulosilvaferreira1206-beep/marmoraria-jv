@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatarDataHora } from '../lib/formatarData'
 import { Plus, X, Image } from 'lucide-react'
 import { usePopup } from '../components/PopupProvider'
 import { emitirEstoqueAtualizado } from '../lib/estoqueEvents'
@@ -196,22 +197,6 @@ export default function Entradas() {
         carregarDados()
     }
 
-    function formatarDataHora(registro) {
-        const criado = registro.criado_em
-        const data = registro.data
-        if (criado) {
-            const valorUTC = criado.endsWith('Z') ? criado : criado + 'Z'
-            return new Date(valorUTC).toLocaleString('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
-            })
-        }
-        if (data) {
-            const [ano, mes, dia] = data.split('-')
-            return `${dia}/${mes}/${ano}`
-        }
-        return '—'
-    }
 
     return (
         <div className="space-y-4">
