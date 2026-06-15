@@ -64,7 +64,7 @@ export async function sincronizar() {
         await fetch(item.url, {
           method:  item.method,
           headers: item.headers,
-          body:    item.body != null ? JSON.stringify(item.body) : undefined,
+          body:    item.body !== null && item.body !== undefined ? JSON.stringify(item.body) : undefined,
         })
         await db.delete('sync_queue', item.qid)
       } catch {

@@ -6,7 +6,7 @@ import noOnlyTests from 'eslint-plugin-no-only-tests'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'android', 'electron']),
+  globalIgnores(['dist', 'android', 'electron', 'e2e', 'test-results']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

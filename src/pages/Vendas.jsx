@@ -1,12 +1,13 @@
 ﻿import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { formatarDataHora } from "../lib/formatarData";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Layers } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
 import { emitirEstoqueAtualizado } from "../lib/estoqueEvents";
 import { useAuth } from "../lib/AuthContext";
 import SelectBusca from "../components/SelectBusca";
 import SelectOuDigita from "../components/SelectOuDigita";
+import ModalAcabamento from "../components/ModalAcabamento";
 
 const vendaVazia = {
   cliente_id: "",
@@ -27,6 +28,7 @@ function FormItensVenda({
   onRemover,
   podeApagar,
 }) {
+  const [modalAcabamento, setModalAcabamento] = useState(false);
   const totalVenda = itens.reduce(
     (acc, i) => acc + i.quantidade * i.valor_unitario,
     0,
@@ -57,19 +59,36 @@ function FormItensVenda({
           </div>
         </div>
 
-        {/* Tipo de Trabalho por item */}
+        {/* Tipo de Trabalho / Acabamento por item */}
         <div className="col-span-2">
           <label className="text-xs text-gray-400">
-            Tipo de Trabalho deste item
+            Tipo de Trabalho / Acabamento
           </label>
-          <div className="mt-1">
-            <SelectOuDigita
-              value={itemForm.tipo_trabalho}
-              onChange={(v) => setItemForm((f) => ({ ...f, tipo_trabalho: v }))}
-              placeholder="Ex: Corte, Polimento, Instalação..."
-            />
+          <div className="mt-1 flex gap-2">
+            <div className="flex-1">
+              <SelectOuDigita
+                value={itemForm.tipo_trabalho}
+                onChange={(v) => setItemForm((f) => ({ ...f, tipo_trabalho: v }))}
+                placeholder="Ex: Corte, Polimento, Instalação..."
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalAcabamento(true)}
+              title="Selecionar acabamento"
+              className="shrink-0 flex items-center gap-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-white transition-colors text-xs"
+            >
+              <Layers size={14} />
+              Acabamento
+            </button>
           </div>
         </div>
+
+        <ModalAcabamento
+          aberto={modalAcabamento}
+          onFechar={() => setModalAcabamento(false)}
+          onSelecionar={(nome) => setItemForm((f) => ({ ...f, tipo_trabalho: nome }))}
+        />
 
         {/* Largura */}
         <div>

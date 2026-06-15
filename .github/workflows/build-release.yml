@@ -84,11 +84,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Copiar web assets para o Android
-        run: |
-          rm -rf android/app/src/main/assets/public
-          mkdir -p android/app/src/main/assets/public
-          cp -r dist/. android/app/src/main/assets/public/
+      - name: Sincronizar web assets e plugins Capacitor para o Android
+        run: npx cap sync android
 
       - name: Configurar Android SDK path
         run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
