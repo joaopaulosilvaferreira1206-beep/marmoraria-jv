@@ -87,9 +87,50 @@ function Layout({ onLogout }) {
   )
 }
 
+function BannerAtualizacao({ info, onFechar }) {
+  const btnFechar = <button onClick={onFechar} className="text-blue-200 hover:text-white text-xs px-2">✕</button>
+
+  if (info.plataforma === 'apk') {
+    return (
+      <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+        <span className="text-sm font-medium">Nova versão {info.versao} disponível!</span>
+        <div className="flex gap-2">
+          <a href={info.url} target="_blank" rel="noreferrer" className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg">
+            Baixar APK
+          </a>
+          {btnFechar}
+        </div>
+      </div>
+    )
+  }
+
+  if (info.fase === 'pronto') {
+    return (
+      <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-green-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+        <span className="text-sm font-medium">Versão {info.versao} pronta para instalar!</span>
+        <div className="flex gap-2">
+          <button onClick={() => window.electronAPI.instalarAtualizacao()} className="bg-white text-green-600 text-xs font-semibold px-3 py-1.5 rounded-lg">
+            Reiniciar e instalar
+          </button>
+          {btnFechar}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+      <span className="text-sm font-medium">
+        Baixando versão {info.versao}{info.percent !== null && info.percent !== undefined ? ` — ${info.percent}%` : '…'}
+      </span>
+      {btnFechar}
+    </div>
+  )
+}
+
 function App() {
   const { sessao, loading, logout } = useAuth()
-  const [atualizacaoApk, setAtualizacaoApk] = useState(null)
+  const [bannerAtualizacao, setBannerAtualizacao] = useState(null)
 
   useEffect(() => {
     if (!sessao) return
@@ -108,19 +149,34 @@ function App() {
 
   // Verificação de atualização para Android (APK sideloaded)
   useEffect(() => {
-    if (window.electronAPI) return // Electron tem auto-update nativo
+    if (window.electronAPI) return
     fetch('https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest')
       .then(r => r.json())
       .then(release => {
         const nova = release.assets?.find(a => a.name?.endsWith('.apk'))
         if (!nova) return
-        const versaoNova = release.tag_name?.replace(/^v/, '') || ''
-        const versaoAtual = __APP_VERSION__
-        if (versaoNova && versaoNova !== versaoAtual) {
-          setAtualizacaoApk({ versao: versaoNova, url: nova.browser_download_url })
+        // Extrai versão do nome do arquivo (ex: MarmorariaJV-v1.2.0.apk)
+        const match = nova.name.match(/v?(\d+\.\d+\.\d+)/)
+        const versaoNova = match ? match[1] : ''
+        if (versaoNova && versaoNova !== __APP_VERSION__) {
+          setBannerAtualizacao({ plataforma: 'apk', versao: versaoNova, url: nova.browser_download_url })
         }
       })
       .catch(() => {})
+  }, [])
+
+  // Verificação de atualização para PC (Electron via IPC)
+  useEffect(() => {
+    if (!window.electronAPI?.onAtualizacao) return
+    window.electronAPI.onAtualizacao((status) => {
+      if (status.tipo === 'disponivel') {
+        setBannerAtualizacao({ plataforma: 'electron', versao: status.versao, fase: 'baixando' })
+      } else if (status.tipo === 'baixando') {
+        setBannerAtualizacao(prev => prev ? { ...prev, percent: status.percent } : null)
+      } else if (status.tipo === 'pronto') {
+        setBannerAtualizacao({ plataforma: 'electron', versao: status.versao, fase: 'pronto' })
+      }
+    })
   }, [])
 
   if (loading) {
@@ -136,26 +192,8 @@ function App() {
   return (
     <PopupProvider>
       <HashRouter>
-        {atualizacaoApk && (
-          <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
-            <span className="text-sm font-medium">Nova versão {atualizacaoApk.versao} disponível!</span>
-            <div className="flex gap-2">
-              <a
-                href={atualizacaoApk.url}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
-              >
-                Baixar APK
-              </a>
-              <button
-                onClick={() => setAtualizacaoApk(null)}
-                className="text-blue-200 hover:text-white text-xs px-2"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+        {bannerAtualizacao && (
+          <BannerAtualizacao info={bannerAtualizacao} onFechar={() => setBannerAtualizacao(null)} />
         )}
         <Layout onLogout={logout} />
       </HashRouter>

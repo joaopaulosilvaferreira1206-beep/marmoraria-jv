@@ -111,19 +111,32 @@ app.whenReady().then(() => {
     createWindow()
 
     if (!isDev) {
+        function enviarStatus(status) {
+            const wins = BrowserWindow.getAllWindows()
+            wins.forEach(w => w.webContents.send('atualizacao-status', status))
+        }
+
         autoUpdater.checkForUpdates()
-        autoUpdater.on('update-downloaded', () => {
-            dialog.showMessageBox({
-                type: 'info',
-                title: 'Atualização disponível',
-                message: 'Nova versão baixada. O aplicativo será reiniciado para instalar a atualização.',
-                buttons: ['Reiniciar agora', 'Mais tarde'],
-                defaultId: 0,
-            }).then(({ response }) => {
-                if (response === 0) autoUpdater.quitAndInstall()
-            })
+        autoUpdater.on('update-available', (info) => {
+            enviarStatus({ tipo: 'disponivel', versao: info.version })
+        })
+        autoUpdater.on('update-not-available', () => {
+            enviarStatus({ tipo: 'atualizado' })
+        })
+        autoUpdater.on('download-progress', (p) => {
+            enviarStatus({ tipo: 'baixando', percent: Math.round(p.percent) })
+        })
+        autoUpdater.on('update-downloaded', (info) => {
+            enviarStatus({ tipo: 'pronto', versao: info.version })
+        })
+        autoUpdater.on('error', () => {
+            enviarStatus({ tipo: 'erro' })
         })
     }
+
+    ipcMain.on('instalar-atualizacao', () => {
+        autoUpdater.quitAndInstall()
+    })
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
