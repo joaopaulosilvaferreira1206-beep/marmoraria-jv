@@ -87,7 +87,6 @@
             { "from": "public/icon.ico", "to": "icon.ico" }
         ],
         "win": {
-            "signAndEditExecutable": false,
             "target": "nsis",
             "icon": "icon.ico"
         },
