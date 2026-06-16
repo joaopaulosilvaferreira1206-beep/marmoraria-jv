@@ -150,7 +150,8 @@ function App() {
   // Verificação de atualização para Android (APK sideloaded)
   useEffect(() => {
     if (window.electronAPI) return
-    if (!window.Capacitor) return  // só roda dentro do app Android
+    // só roda dentro do app Android nativo (não no browser)
+    if (!window.Capacitor?.isNativePlatform?.()) return
     fetch('https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest')
       .then(r => r.json())
       .then(release => {
@@ -171,9 +172,12 @@ function App() {
     if (!window.electronAPI?.onAtualizacao) return
     window.electronAPI.onAtualizacao((status) => {
       if (status.tipo === 'disponivel') {
-        setBannerAtualizacao({ plataforma: 'electron', versao: status.versao, fase: 'baixando' })
+        // não mostra nada ainda — aguarda progresso de download
       } else if (status.tipo === 'baixando') {
-        setBannerAtualizacao(prev => prev ? { ...prev, percent: status.percent } : null)
+        setBannerAtualizacao(prev =>
+          prev ? { ...prev, percent: status.percent }
+               : { plataforma: 'electron', versao: status.versao, fase: 'baixando' }
+        )
       } else if (status.tipo === 'pronto') {
         setBannerAtualizacao({ plataforma: 'electron', versao: status.versao, fase: 'pronto' })
       } else if (status.tipo === 'atualizado' || status.tipo === 'erro') {

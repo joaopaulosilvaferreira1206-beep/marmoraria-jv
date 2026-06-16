@@ -35,7 +35,6 @@ export default function Relatorios() {
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [historico, setHistorico] = useState([]);
   const [loadingHistorico, setLoadingHistorico] = useState(false);
-  const [dropdownAberto, setDropdownAberto] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
@@ -892,11 +891,7 @@ export default function Relatorios() {
             placeholder="Selecione um cliente..."
             campoLabel="nome"
             manterAberto={true}
-            onToggle={setDropdownAberto}
           />
-
-          {/* Espaço reservado apenas quando dropdown estiver aberto */}
-          {dropdownAberto && <div style={{ height: "228px" }} />}
 
           {loadingHistorico && (
             <p className="text-gray-400 text-sm py-6 text-center">
