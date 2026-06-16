@@ -132,6 +132,22 @@ function App() {
   const { sessao, loading, logout } = useAuth()
   const [bannerAtualizacao, setBannerAtualizacao] = useState(null)
 
+  // Detecta mudança de versão e limpa cache do SW sem deslogar
+  useEffect(() => {
+    const chave = 'marmoraria_app_version'
+    const versaoAnterior = localStorage.getItem(chave)
+    localStorage.setItem(chave, __APP_VERSION__)
+    if (versaoAnterior && versaoAnterior !== __APP_VERSION__) {
+      if ('caches' in window) {
+        caches.keys()
+          .then(nomes => Promise.all(nomes.map(n => caches.delete(n))))
+          .then(() => window.location.reload())
+      } else {
+        window.location.reload()
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (!sessao) return
     if (!window.electronAPI) return
