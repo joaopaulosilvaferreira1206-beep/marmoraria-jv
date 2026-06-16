@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { DatabaseBackup, RotateCcw, CheckCircle, AlertTriangle, Clock } from 'lucide-react'
-import { restaurarBackup } from '../lib/backup'
+import { DatabaseBackup, RotateCcw, CheckCircle, AlertTriangle, Clock, Save } from 'lucide-react'
+import { restaurarBackup, gerarBackup } from '../lib/backup'
 import { usePopup } from '../components/PopupProvider'
 
 export default function Backup() {
     const [backups, setBackups] = useState([])
     const [restaurando, setRestaurando] = useState(false)
+    const [salvando, setSalvando] = useState(false)
     const [selecionado, setSelecionado] = useState(null)
     const { showPopup } = usePopup()
 
@@ -18,6 +19,21 @@ export default function Backup() {
         if (!window.electronAPI) return
         const lista = await window.electronAPI.listarBackups()
         setBackups(lista)
+    }
+
+    async function handleBackupManual() {
+        setSalvando(true)
+        try {
+            const resultado = await gerarBackup()
+            if (resultado?.ok) {
+                showPopup({ tipo: 'sucesso', titulo: 'Backup Salvo', mensagem: 'Backup gerado com sucesso!' })
+                carregarBackups()
+            } else {
+                showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível gerar o backup.' })
+            }
+        } finally {
+            setSalvando(false)
+        }
     }
 
     async function handleRestaurar() {
@@ -52,11 +68,23 @@ export default function Backup() {
     return (
         <div className="space-y-6">
             {/* Cabeçalho */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-100">Backup e Restauração</h1>
-                <p className="text-gray-400 mt-1">
-                    O backup é feito automaticamente ao abrir o app e a cada 24 horas.
-                </p>
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-100">Backup e Restauração</h1>
+                    <p className="text-gray-400 mt-1">
+                        O backup é feito automaticamente ao abrir o app e a cada 24 horas.
+                    </p>
+                </div>
+                {window.electronAPI && (
+                    <button
+                        onClick={handleBackupManual}
+                        disabled={salvando}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shrink-0"
+                    >
+                        <Save size={16} />
+                        {salvando ? 'Salvando…' : 'Fazer Backup Agora'}
+                    </button>
+                )}
             </div>
 
             {/* Info */}
