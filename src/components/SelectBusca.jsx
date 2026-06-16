@@ -3,6 +3,47 @@ import { ChevronDown, Search } from "lucide-react";
 
 const DROP_HEIGHT = 220;
 
+// Dropdown inline: renderiza no fluxo do DOM, sem overlay flutuante.
+// Usado quando manterAberto=true — o browser rola o input acima do teclado sozinho.
+function DropdownInline({ opcoesFiltradas, busca, setBusca, inputRef, selecionar, valor, campoValor, campoLabel, campoSecundario }) {
+  return (
+    <div className="mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl" style={{ maxHeight: `${DROP_HEIGHT}px` }}>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
+        <Search size={14} className="text-gray-400 shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar..."
+          className="flex-1 bg-transparent text-gray-100 text-sm focus:outline-none placeholder-gray-500"
+        />
+      </div>
+      <div className="overflow-y-auto" style={{ maxHeight: `${DROP_HEIGHT - 48}px` }}>
+        {opcoesFiltradas.length === 0 ? (
+          <div className="px-3 py-3 text-gray-500 text-sm text-center">Nenhum resultado encontrado</div>
+        ) : (
+          opcoesFiltradas.map((opcao) => (
+            <button
+              key={opcao[campoValor]}
+              type="button"
+              onClick={() => selecionar(opcao)}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-700 ${
+                opcao[campoValor] === valor ? "bg-blue-600/20 text-blue-300" : "text-gray-200"
+              }`}
+            >
+              {campoSecundario && (
+                <span className="text-gray-400 font-mono mr-2">[{opcao[campoSecundario]}]</span>
+              )}
+              {opcao[campoLabel]}
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SelectBusca({
   opcoes = [],
   valor,
@@ -16,7 +57,7 @@ export default function SelectBusca({
 }) {
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
-  const [posicao, setPosicao] = useState({ top: 0, left: 0, width: 0, acima: false });
+  const [posicao, setPosicao] = useState({ top: 0, left: 0, width: 0 });
   const ref = useRef(null);
   const inputRef = useRef(null);
 
@@ -40,12 +81,7 @@ export default function SelectBusca({
     const keyboardOpen = vv && vvHeight < window.innerHeight * 0.75;
 
     if (keyboardOpen) {
-      // Flutua fixo acima do teclado
-      setPosicao({
-        top: vvOffsetTop + vvHeight - DROP_HEIGHT - 8,
-        left: rect.left,
-        width: rect.width,
-      });
+      setPosicao({ top: vvOffsetTop + vvHeight - DROP_HEIGHT - 8, left: rect.left, width: rect.width });
       return;
     }
 
@@ -78,27 +114,23 @@ export default function SelectBusca({
   useEffect(() => {
     if (!aberto) return;
 
+    if (manterAberto) {
+      // Modo inline: só foca o input, sem travar scroll nem calcular posição
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      return;
+    }
+
     atualizarPosicao();
     if (inputRef.current) inputRef.current.focus();
 
-    // Recalcular quando teclado virtual abre/fecha
     const vv = window.visualViewport;
     if (vv) vv.addEventListener("resize", atualizarPosicao);
 
-    if (manterAberto) {
-      const el = document.querySelector("main");
-      if (el) el.style.overflow = "hidden";
-      return () => {
-        if (el) el.style.overflow = "";
-        if (vv) vv.removeEventListener("resize", atualizarPosicao);
-      };
-    }
-
     let rafId;
-    function loop() {
-      atualizarPosicao();
-      rafId = requestAnimationFrame(loop);
-    }
+    function loop() { atualizarPosicao(); rafId = requestAnimationFrame(loop); }
     rafId = requestAnimationFrame(loop);
 
     function handleScroll(e) {
@@ -122,6 +154,8 @@ export default function SelectBusca({
     if (onToggle) onToggle(false);
   }
 
+  const dropProps = { opcoesFiltradas, busca, setBusca, inputRef, selecionar, valor, campoValor, campoLabel, campoSecundario };
+
   return (
     <div ref={ref} className="relative w-full">
       <button
@@ -137,21 +171,17 @@ export default function SelectBusca({
               : opcaoSelecionada[campoLabel]
             : placeholder}
         </span>
-        <ChevronDown
-          size={16}
-          className={`text-gray-400 transition-transform ${aberto ? "rotate-180" : ""}`}
-        />
+        <ChevronDown size={16} className={`text-gray-400 transition-transform ${aberto ? "rotate-180" : ""}`} />
       </button>
 
-      {aberto && (
+      {/* Inline: fica colado ao botão no fluxo da página */}
+      {aberto && manterAberto && <DropdownInline {...dropProps} />}
+
+      {/* Overlay flutuante: para os demais usos */}
+      {aberto && !manterAberto && (
         <div
           className="fixed z-[9999] bg-gray-800 border border-gray-600 rounded-lg shadow-xl"
-          style={{
-            top: posicao.top,
-            left: posicao.left,
-            width: posicao.width,
-            maxHeight: `${DROP_HEIGHT}px`,
-          }}
+          style={{ top: posicao.top, left: posicao.left, width: posicao.width, maxHeight: `${DROP_HEIGHT}px` }}
         >
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
             <Search size={14} className="text-gray-400 shrink-0" />
@@ -166,9 +196,7 @@ export default function SelectBusca({
           </div>
           <div className="overflow-y-auto" style={{ maxHeight: `${DROP_HEIGHT - 48}px` }}>
             {opcoesFiltradas.length === 0 ? (
-              <div className="px-3 py-3 text-gray-500 text-sm text-center">
-                Nenhum resultado encontrado
-              </div>
+              <div className="px-3 py-3 text-gray-500 text-sm text-center">Nenhum resultado encontrado</div>
             ) : (
               opcoesFiltradas.map((opcao) => (
                 <button
@@ -176,15 +204,11 @@ export default function SelectBusca({
                   type="button"
                   onClick={() => selecionar(opcao)}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-700 ${
-                    opcao[campoValor] === valor
-                      ? "bg-blue-600/20 text-blue-300"
-                      : "text-gray-200"
+                    opcao[campoValor] === valor ? "bg-blue-600/20 text-blue-300" : "text-gray-200"
                   }`}
                 >
                   {campoSecundario && (
-                    <span className="text-gray-400 font-mono mr-2">
-                      [{opcao[campoSecundario]}]
-                    </span>
+                    <span className="text-gray-400 font-mono mr-2">[{opcao[campoSecundario]}]</span>
                   )}
                   {opcao[campoLabel]}
                 </button>
