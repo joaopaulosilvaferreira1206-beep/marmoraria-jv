@@ -34,14 +34,27 @@ export default function SelectBusca({
   function atualizarPosicao() {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const vvHeight = window.visualViewport?.height ?? window.innerHeight;
+    const vv = window.visualViewport;
+    const vvHeight = vv?.height ?? window.innerHeight;
+    const vvOffsetTop = vv?.offsetTop ?? 0;
+    const keyboardOpen = vv && vvHeight < window.innerHeight * 0.75;
+
+    if (keyboardOpen) {
+      // Flutua fixo acima do teclado
+      setPosicao({
+        top: vvOffsetTop + vvHeight - DROP_HEIGHT - 8,
+        left: rect.left,
+        width: rect.width,
+      });
+      return;
+    }
+
     const spaceBelow = vvHeight - rect.bottom - 8;
     const acima = spaceBelow < DROP_HEIGHT && rect.top > DROP_HEIGHT;
     setPosicao({
       top: acima ? rect.top - DROP_HEIGHT - 4 : rect.bottom + 4,
       left: rect.left,
       width: rect.width,
-      acima,
     });
   }
 
