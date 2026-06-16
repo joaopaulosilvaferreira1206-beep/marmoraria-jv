@@ -67,6 +67,11 @@ export default function SelectBusca({
     atualizarPosicao();
     if (inputRef.current) inputRef.current.focus();
 
+    if (manterAberto) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+
     if (!manterAberto) {
       let rafId;
       function loop() {
