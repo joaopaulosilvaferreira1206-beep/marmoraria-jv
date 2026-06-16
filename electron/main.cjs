@@ -82,13 +82,17 @@ ipcMain.handle('ler-backup', async (_, caminho) => {
 })
 
 function createWindow() {
+    const iconPath = app.isPackaged
+        ? path.join(process.resourcesPath, 'icon.ico')
+        : path.join(__dirname, '../public/icon.ico')
+
     const win = new BrowserWindow({
         width: 1280,
         height: 800,
         minWidth: 960,
         minHeight: 640,
         autoHideMenuBar: true,
-        icon: path.join(__dirname, '../public/icon.ico'),
+        icon: iconPath,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,

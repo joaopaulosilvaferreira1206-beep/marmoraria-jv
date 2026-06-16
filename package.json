@@ -83,6 +83,9 @@
             "repo": "marmoraria-jv",
             "releaseType": "release"
         },
+        "extraResources": [
+            { "from": "public/icon.ico", "to": "icon.ico" }
+        ],
         "win": {
             "signAndEditExecutable": false,
             "target": "nsis",
