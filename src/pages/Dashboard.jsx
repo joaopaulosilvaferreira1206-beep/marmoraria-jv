@@ -21,6 +21,8 @@ export default function Dashboard() {
   const [alertas, setAlertas] = useState([]);
   const [vendasRecentes, setVendasRecentes] = useState([]);
   const [vendasPorMes, setVendasPorMes] = useState([]);
+  const [perdasPorMes, setPerdasPorMes] = useState([]);
+  const [mesMeses, setMesMeses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function Dashboard() {
     const inicioMes = new Date(anoAtual, mesAtual, 1)
       .toISOString()
       .split("T")[0];
+    const inicio3Meses = new Date(anoAtual, mesAtual - 2, 1).toISOString().split("T")[0];
     const inicioAno = new Date(anoAtual, 0, 1).toISOString().split("T")[0];
 
     const [
@@ -68,6 +71,7 @@ export default function Dashboard() {
       { data: vendas },
       { data: vendasAno },
       { data: orcamentos },
+      { data: perdasAno },
     ] = await Promise.all([
       supabase.from("materiais").select("*"),
       supabase.from("perdas").select("quantidade").gte("data", inicioMes),
@@ -79,8 +83,12 @@ export default function Dashboard() {
       supabase
         .from("vendas")
         .select("data, valor_total")
-        .gte("data", inicioAno),
+        .gte("data", inicio3Meses),
       supabase.from("orcamentos").select("id, status").eq("status", "pendente"),
+      supabase
+        .from("perdas")
+        .select("data, quantidade")
+        .gte("data", inicio3Meses),
     ]);
 
     if (materiais) {
@@ -106,34 +114,32 @@ export default function Dashboard() {
       setAlertas(estoqueBaixo.slice(0, 5));
     }
 
-    // Agrupa vendas por mês (últimos 6 meses)
-    if (vendasAno) {
-      const meses = [
-        "Jan",
-        "Fev",
-        "Mar",
-        "Abr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Ago",
-        "Set",
-        "Out",
-        "Nov",
-        "Dez",
-      ];
-      const agrupado = {};
-      for (let i = 5; i >= 0; i--) {
+    // Agrupa vendas e perdas por mês (últimos 3 meses)
+    {
+      const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+      const labels = [];
+      const vendasGrp = {};
+      const perdasGrp = {};
+      for (let i = 2; i >= 0; i--) {
         const d = new Date(anoAtual, mesAtual - i, 1);
         const chave = `${d.getFullYear()}-${d.getMonth()}`;
-        agrupado[chave] = { mes: meses[d.getMonth()], total: 0 };
+        vendasGrp[chave] = 0;
+        perdasGrp[chave] = 0;
+        labels.push({ chave, mes: nomes[d.getMonth()] });
       }
-      vendasAno.forEach((v) => {
-        const [ano, mes] = v.data.split('-').map(Number)
-        const chave = `${ano}-${mes - 1}`
-        if (agrupado[chave]) agrupado[chave].total += v.valor_total || 0;
+      (vendasAno || []).forEach((v) => {
+        const [ano, mes] = v.data.split('-').map(Number);
+        const chave = `${ano}-${mes - 1}`;
+        if (chave in vendasGrp) vendasGrp[chave] += v.valor_total || 0;
       });
-      setVendasPorMes(Object.values(agrupado));
+      (perdasAno || []).forEach((p) => {
+        const [ano, mes] = p.data.split('-').map(Number);
+        const chave = `${ano}-${mes - 1}`;
+        if (chave in perdasGrp) perdasGrp[chave] += p.quantidade || 0;
+      });
+      setMesMeses(labels);
+      setVendasPorMes(labels.map(l => vendasGrp[l.chave]));
+      setPerdasPorMes(labels.map(l => perdasGrp[l.chave]));
     }
 
     if (vendas) setVendasRecentes(vendas);
@@ -179,7 +185,6 @@ export default function Dashboard() {
     },
   ];
 
-  const maxVendas = Math.max(...vendasPorMes.map((m) => m.total), 1);
 
   if (loading)
     return (
@@ -208,41 +213,51 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Gráfico de vendas por mês */}
+      {/* Gráfico vendas x perdas (últimos 3 meses) */}
       <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-100 mb-5 flex items-center gap-2">
-          <DollarSign size={20} className="text-purple-400" />
-          Vendas por Mês (últimos 6 meses)
-        </h3>
-        <div className="flex items-end gap-3 h-40">
-          {vendasPorMes.map((m) => (
-            <div
-              key={m.mes}
-              className="flex-1 flex flex-col items-center gap-1"
-            >
-              <p className="text-xs text-gray-400 font-medium">
-                {m.total > 0 ? `R$ ${(m.total / 1000).toFixed(1)}k` : ""}
-              </p>
-              <div
-                className="w-full relative flex items-end"
-                style={{ height: "100px" }}
-              >
-                <div
-                  className="w-full bg-purple-600 hover:bg-purple-500 rounded-t-lg transition-all"
-                  style={{
-                    height: `${Math.max((m.total / maxVendas) * 100, m.total > 0 ? 4 : 0)}%`,
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-400">{m.mes}</p>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+            <DollarSign size={20} className="text-green-400" />
+            Vendas × Perdas (últimos 3 meses)
+          </h3>
+          <div className="flex items-center gap-4 text-xs text-gray-400">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> Ganho (R$)</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> Perda (m²)</span>
+          </div>
         </div>
-        {vendasPorMes.every((m) => m.total === 0) && (
-          <p className="text-gray-500 text-sm text-center mt-2">
-            Nenhuma venda registrada nos últimos 6 meses.
-          </p>
-        )}
+        {(() => {
+          const maxV = Math.max(...vendasPorMes, 1);
+          const maxP = Math.max(...perdasPorMes, 1);
+          return (
+            <div className="flex items-end gap-6 h-40">
+              {mesMeses.map((l, i) => (
+                <div key={l.chave} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full flex items-end gap-1" style={{ height: "100px" }}>
+                    <div className="flex-1 flex flex-col justify-end">
+                      {vendasPorMes[i] > 0 && (
+                        <p className="text-xs text-green-400 text-center mb-0.5">{`R$ ${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
+                      )}
+                      <div
+                        className="w-full bg-green-500 hover:bg-green-400 rounded-t transition-all"
+                        style={{ height: `${Math.max((vendasPorMes[i] / maxV) * 100, vendasPorMes[i] > 0 ? 4 : 0)}%` }}
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col justify-end">
+                      {perdasPorMes[i] > 0 && (
+                        <p className="text-xs text-red-400 text-center mb-0.5">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
+                      )}
+                      <div
+                        className="w-full bg-red-500 hover:bg-red-400 rounded-t transition-all"
+                        style={{ height: `${Math.max((perdasPorMes[i] / maxP) * 100, perdasPorMes[i] > 0 ? 4 : 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">{l.mes}</p>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
