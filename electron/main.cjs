@@ -121,10 +121,14 @@ app.whenReady().then(() => {
         }
 
         autoUpdater.autoDownload = false
-        setTimeout(() => autoUpdater.checkForUpdates(), 10000)
+
+        function verificar() { autoUpdater.checkForUpdates().catch(() => {}) }
+        setTimeout(verificar, 10000)
+        setInterval(verificar, 30 * 60 * 1000)
+
         autoUpdater.on('update-available', (info) => {
             enviarStatus({ tipo: 'disponivel', versao: info.version })
-            autoUpdater.downloadUpdate()
+            autoUpdater.downloadUpdate().catch(() => {})
         })
         autoUpdater.on('update-not-available', () => {
             enviarStatus({ tipo: 'atualizado' })
