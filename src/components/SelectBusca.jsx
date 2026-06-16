@@ -68,8 +68,9 @@ export default function SelectBusca({
     if (inputRef.current) inputRef.current.focus();
 
     if (manterAberto) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
+      const el = document.querySelector("main");
+      if (el) el.style.overflow = "hidden";
+      return () => { if (el) el.style.overflow = ""; };
     }
 
     if (!manterAberto) {

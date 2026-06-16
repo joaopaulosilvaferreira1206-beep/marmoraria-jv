@@ -150,6 +150,7 @@ function App() {
   // Verificação de atualização para Android (APK sideloaded)
   useEffect(() => {
     if (window.electronAPI) return
+    if (!window.Capacitor) return  // só roda dentro do app Android
     fetch('https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest')
       .then(r => r.json())
       .then(release => {
