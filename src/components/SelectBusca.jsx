@@ -67,14 +67,13 @@ export default function SelectBusca({
     atualizarPosicao();
     if (inputRef.current) inputRef.current.focus();
 
-    let rafId;
-    function loop() {
-      atualizarPosicao();
-      rafId = requestAnimationFrame(loop);
-    }
-    rafId = requestAnimationFrame(loop);
-
     if (!manterAberto) {
+      let rafId;
+      function loop() {
+        atualizarPosicao();
+        rafId = requestAnimationFrame(loop);
+      }
+      rafId = requestAnimationFrame(loop);
       function handleScroll(e) {
         if (ref.current && ref.current.contains(e.target)) return;
         setAberto(false);
@@ -87,8 +86,6 @@ export default function SelectBusca({
         window.removeEventListener("scroll", handleScroll, true);
       };
     }
-
-    return () => cancelAnimationFrame(rafId);
   }, [aberto, manterAberto, onToggle]);
 
   function selecionar(opcao) {

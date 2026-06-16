@@ -245,15 +245,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {alertas.length > 0 && (
-        <div className="flex items-center gap-3 bg-yellow-900/40 border border-yellow-600 rounded-xl px-5 py-3 text-yellow-300 text-sm">
-          <AlertTriangle size={18} className="shrink-0 text-yellow-400" />
-          <span>
-            <strong>{alertas.length}</strong> {alertas.length === 1 ? 'material está' : 'materiais estão'} com estoque abaixo do mínimo.
-          </span>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Vendas recentes */}
