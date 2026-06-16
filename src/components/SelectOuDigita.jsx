@@ -41,9 +41,10 @@ export default function SelectOuDigita({ label, value, onChange, placeholder = '
         setOpcoes(prev => [...prev, nomeLimpo].sort())
     }
 
-    const filtradas = opcoes.filter(o =>
-        o.toLowerCase().includes(texto.toLowerCase())
-    )
+    const termo = texto.toLowerCase();
+    const filtradas = texto
+      ? [...opcoes.filter(o => o.toLowerCase().startsWith(termo)), ...opcoes.filter(o => !o.toLowerCase().startsWith(termo) && o.toLowerCase().includes(termo))]
+      : opcoes;
 
     function selecionar(opcao) {
         setTexto(opcao)

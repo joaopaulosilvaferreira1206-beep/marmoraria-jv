@@ -63,14 +63,23 @@ export default function SelectBusca({
 
   const opcaoSelecionada = opcoes.find((o) => o[campoValor] === valor);
 
-  const opcoesFiltradas = opcoes.filter((o) => {
-    const termo = busca.toLowerCase();
-    const labelMatch = String(o[campoLabel] || "").toLowerCase().includes(termo);
-    const secundarioMatch = campoSecundario
-      ? String(o[campoSecundario] || "").toLowerCase().includes(termo)
-      : false;
-    return labelMatch || secundarioMatch;
-  });
+  const opcoesFiltradas = busca
+    ? opcoes.filter((o) => {
+        const termo = busca.toLowerCase();
+        const label = String(o[campoLabel] || "").toLowerCase();
+        const sec = campoSecundario ? String(o[campoSecundario] || "").toLowerCase() : "";
+        return label.startsWith(termo) || sec.startsWith(termo) || label.includes(termo) || sec.includes(termo);
+      }).sort((a, b) => {
+        const termo = busca.toLowerCase();
+        const aLabel = String(a[campoLabel] || "").toLowerCase();
+        const bLabel = String(b[campoLabel] || "").toLowerCase();
+        const aStarts = aLabel.startsWith(termo);
+        const bStarts = bLabel.startsWith(termo);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return 0;
+      })
+    : opcoes;
 
   function atualizarPosicao() {
     if (!ref.current) return;
