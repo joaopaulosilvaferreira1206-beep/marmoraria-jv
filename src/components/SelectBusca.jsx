@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
+const DROP_HEIGHT = 220;
+
 export default function SelectBusca({
   opcoes = [],
   valor,
@@ -14,7 +16,7 @@ export default function SelectBusca({
 }) {
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
-  const [posicao, setPosicao] = useState({ top: 0, left: 0, width: 0 });
+  const [posicao, setPosicao] = useState({ top: 0, left: 0, width: 0, acima: false });
   const ref = useRef(null);
   const inputRef = useRef(null);
 
@@ -22,26 +24,25 @@ export default function SelectBusca({
 
   const opcoesFiltradas = opcoes.filter((o) => {
     const termo = busca.toLowerCase();
-    const labelMatch = String(o[campoLabel] || "")
-      .toLowerCase()
-      .includes(termo);
+    const labelMatch = String(o[campoLabel] || "").toLowerCase().includes(termo);
     const secundarioMatch = campoSecundario
-      ? String(o[campoSecundario] || "")
-          .toLowerCase()
-          .includes(termo)
+      ? String(o[campoSecundario] || "").toLowerCase().includes(termo)
       : false;
     return labelMatch || secundarioMatch;
   });
 
   function atualizarPosicao() {
-    if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      setPosicao({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const vvHeight = window.visualViewport?.height ?? window.innerHeight;
+    const spaceBelow = vvHeight - rect.bottom - 8;
+    const acima = spaceBelow < DROP_HEIGHT && rect.top > DROP_HEIGHT;
+    setPosicao({
+      top: acima ? rect.top - DROP_HEIGHT - 4 : rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      acima,
+    });
   }
 
   function abrirFechar(novoEstado) {
@@ -67,31 +68,38 @@ export default function SelectBusca({
     atualizarPosicao();
     if (inputRef.current) inputRef.current.focus();
 
+    // Recalcular quando teclado virtual abre/fecha
+    const vv = window.visualViewport;
+    if (vv) vv.addEventListener("resize", atualizarPosicao);
+
     if (manterAberto) {
       const el = document.querySelector("main");
       if (el) el.style.overflow = "hidden";
-      return () => { if (el) el.style.overflow = ""; };
-    }
-
-    if (!manterAberto) {
-      let rafId;
-      function loop() {
-        atualizarPosicao();
-        rafId = requestAnimationFrame(loop);
-      }
-      rafId = requestAnimationFrame(loop);
-      function handleScroll(e) {
-        if (ref.current && ref.current.contains(e.target)) return;
-        setAberto(false);
-        setBusca("");
-        if (onToggle) onToggle(false);
-      }
-      window.addEventListener("scroll", handleScroll, true);
       return () => {
-        cancelAnimationFrame(rafId);
-        window.removeEventListener("scroll", handleScroll, true);
+        if (el) el.style.overflow = "";
+        if (vv) vv.removeEventListener("resize", atualizarPosicao);
       };
     }
+
+    let rafId;
+    function loop() {
+      atualizarPosicao();
+      rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
+
+    function handleScroll(e) {
+      if (ref.current && ref.current.contains(e.target)) return;
+      setAberto(false);
+      setBusca("");
+      if (onToggle) onToggle(false);
+    }
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", handleScroll, true);
+      if (vv) vv.removeEventListener("resize", atualizarPosicao);
+    };
   }, [aberto, manterAberto, onToggle]);
 
   function selecionar(opcao) {
@@ -129,7 +137,7 @@ export default function SelectBusca({
             top: posicao.top,
             left: posicao.left,
             width: posicao.width,
-            maxHeight: "220px",
+            maxHeight: `${DROP_HEIGHT}px`,
           }}
         >
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
@@ -143,7 +151,7 @@ export default function SelectBusca({
               className="flex-1 bg-transparent text-gray-100 text-sm focus:outline-none placeholder-gray-500"
             />
           </div>
-          <div className="overflow-y-auto" style={{ maxHeight: "172px" }}>
+          <div className="overflow-y-auto" style={{ maxHeight: `${DROP_HEIGHT - 48}px` }}>
             {opcoesFiltradas.length === 0 ? (
               <div className="px-3 py-3 text-gray-500 text-sm text-center">
                 Nenhum resultado encontrado
