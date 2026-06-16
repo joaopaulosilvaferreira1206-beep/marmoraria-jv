@@ -120,9 +120,11 @@ app.whenReady().then(() => {
             wins.forEach(w => w.webContents.send('atualizacao-status', status))
         }
 
-        autoUpdater.checkForUpdates()
+        autoUpdater.autoDownload = false
+        setTimeout(() => autoUpdater.checkForUpdates(), 10000)
         autoUpdater.on('update-available', (info) => {
             enviarStatus({ tipo: 'disponivel', versao: info.version })
+            autoUpdater.downloadUpdate()
         })
         autoUpdater.on('update-not-available', () => {
             enviarStatus({ tipo: 'atualizado' })

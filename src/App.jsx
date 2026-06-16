@@ -176,6 +176,8 @@ function App() {
         setBannerAtualizacao(prev => prev ? { ...prev, percent: status.percent } : null)
       } else if (status.tipo === 'pronto') {
         setBannerAtualizacao({ plataforma: 'electron', versao: status.versao, fase: 'pronto' })
+      } else if (status.tipo === 'atualizado' || status.tipo === 'erro') {
+        setBannerAtualizacao(null)
       }
     })
   }, [])
