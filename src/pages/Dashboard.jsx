@@ -245,46 +245,16 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Alertas de estoque */}
-        <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <AlertTriangle size={20} className="text-yellow-500" />
-            Alertas de Estoque Baixo
-          </h3>
-          {alertas.length === 0 ? (
-            <p className="text-gray-400 text-sm">Nenhum alerta no momento ✅</p>
-          ) : (
-            <div className="rounded-xl overflow-hidden border border-gray-700">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-700">
-                  <tr>
-                    <th className="text-left px-4 py-2 text-gray-300">
-                      Material
-                    </th>
-                    <th className="text-left px-4 py-2 text-gray-300">Saldo</th>
-                    <th className="text-left px-4 py-2 text-gray-300">
-                      Mínimo
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alertas.map((m) => (
-                    <tr key={m.id} className="border-t border-gray-700">
-                      <td className="px-4 py-2 font-medium text-gray-100">
-                        {m.descricao}
-                      </td>
-                      <td className="px-4 py-2 text-red-400 font-bold">
-                        {m.saldo} m²
-                      </td>
-                      <td className="px-4 py-2 text-gray-400">{m.minimo} m²</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {alertas.length > 0 && (
+        <div className="flex items-center gap-3 bg-yellow-900/40 border border-yellow-600 rounded-xl px-5 py-3 text-yellow-300 text-sm">
+          <AlertTriangle size={18} className="shrink-0 text-yellow-400" />
+          <span>
+            <strong>{alertas.length}</strong> {alertas.length === 1 ? 'material está' : 'materiais estão'} com estoque abaixo do mínimo.
+          </span>
         </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Vendas recentes */}
         <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
