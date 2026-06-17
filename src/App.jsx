@@ -93,32 +93,40 @@ function BannerAtualizacao({ info, onFechar }) {
 
   async function baixarApk() {
     const { Filesystem, Directory } = await import('@capacitor/filesystem')
-    const { FileOpener } = await import('@capawesome-team/capacitor-file-opener')
 
     setFase('baixando')
     setProgresso(0)
 
     try {
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.responseType = 'arraybuffer'
-        xhr.onprogress = (e) => {
-          if (e.lengthComputable) setProgresso(Math.round((e.loaded / e.total) * 100))
-        }
-        xhr.onload = async () => {
-          try {
-            const bytes = new Uint8Array(xhr.response)
-            let binary = ''
-            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
-            const base64 = btoa(binary)
-            await Filesystem.writeFile({ path: 'update.apk', directory: Directory.Cache, data: base64 })
-            resolve()
-          } catch (e) { reject(e) }
-        }
-        xhr.onerror = reject
-        xhr.open('GET', info.url)
-        xhr.send()
-      })
+      const resp = await fetch(info.url)
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+
+      const contentLength = Number(resp.headers.get('content-length')) || 0
+      const reader = resp.body.getReader()
+      const chunks = []
+      let recebido = 0
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        chunks.push(value)
+        recebido += value.length
+        if (contentLength) setProgresso(Math.round((recebido / contentLength) * 100))
+      }
+
+      // Montar Uint8Array final
+      const total = new Uint8Array(recebido)
+      let pos = 0
+      for (const chunk of chunks) { total.set(chunk, pos); pos += chunk.length }
+
+      // Converter para base64 em blocos de 8 KB (evita stack overflow)
+      const BLOCO = 8192
+      let base64 = ''
+      for (let i = 0; i < total.byteLength; i += BLOCO) {
+        base64 += btoa(String.fromCharCode(...total.subarray(i, i + BLOCO)))
+      }
+
+      await Filesystem.writeFile({ path: 'update.apk', directory: Directory.Cache, data: base64 })
       setFase('pronto')
     } catch {
       setFase('erro')
