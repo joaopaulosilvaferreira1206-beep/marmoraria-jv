@@ -47,7 +47,7 @@ export default function Backup() {
     const [modoRestauracao, setModoRestauracao] = useState('completo')
     const [selecao, setSelecao] = useState({})
     const [expandida, setExpandida] = useState(null)
-    const { showPopup } = usePopup()
+    const { confirm, showSuccess, showError } = usePopup()
 
     useEffect(() => { carregarBackups() }, [])
 
@@ -79,7 +79,7 @@ export default function Backup() {
             setSelecao(selecaoInicial)
             setModoRestauracao('seletivo')
         } catch (e) {
-            showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: e.message })
+            showError(e.message)
         } finally {
             setCarregandoDados(false)
         }
@@ -105,20 +105,18 @@ export default function Backup() {
 
     async function handleExcluir(backup, e) {
         e.stopPropagation()
-        showPopup({
-            tipo: 'confirmacao',
-            titulo: 'Excluir Backup',
-            mensagem: `Excluir o backup de ${new Date(backup.criado_em).toLocaleString('pt-BR')}? Esta ação não pode ser desfeita.`,
-            onConfirmar: async () => {
-                const resultado = await excluirBackupNuvem(backup.id)
-                if (resultado?.ok) {
-                    if (selecionado?.id === backup.id) { setSelecionado(null); setDadosBackup(null) }
-                    carregarBackups()
-                } else {
-                    showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível excluir.' })
-                }
-            }
-        })
+        const ok = await confirm(
+            `Excluir o backup de ${new Date(backup.criado_em).toLocaleString('pt-BR')}? Esta ação não pode ser desfeita.`,
+            'Excluir Backup'
+        )
+        if (!ok) return
+        const resultado = await excluirBackupNuvem(backup.id)
+        if (resultado?.ok) {
+            if (selecionado?.id === backup.id) { setSelecionado(null); setDadosBackup(null) }
+            carregarBackups()
+        } else {
+            showError(resultado?.erro || 'Não foi possível excluir.')
+        }
     }
 
     async function handleBackupManual() {
@@ -126,10 +124,10 @@ export default function Backup() {
         try {
             const resultado = await gerarBackup()
             if (resultado?.ok) {
-                showPopup({ tipo: 'sucesso', titulo: 'Backup Salvo', mensagem: 'Backup salvo na nuvem!' })
+                showSuccess('Backup salvo na nuvem!', 'Backup Salvo')
                 carregarBackups()
             } else {
-                showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível gerar o backup.' })
+                showError(resultado?.erro || 'Não foi possível gerar o backup.')
             }
         } finally {
             setSalvando(false)
@@ -138,50 +136,42 @@ export default function Backup() {
 
     async function handleRestaurarCompleto() {
         if (!selecionado) return
-        showPopup({
-            tipo: 'confirmacao',
-            titulo: 'Restaurar Backup Completo',
-            mensagem: `Todos os dados atuais serão substituídos pelos do backup de ${new Date(selecionado.criado_em).toLocaleString('pt-BR')}. Esta ação não pode ser desfeita.`,
-            onConfirmar: async () => {
-                setRestaurando(true)
-                const resultado = await restaurarBackupNuvem(selecionado.id)
-                setRestaurando(false)
-                if (resultado.ok) {
-                    showPopup({ tipo: 'sucesso', titulo: 'Backup Restaurado', mensagem: 'Dados restaurados com sucesso!' })
-                    setSelecionado(null); setDadosBackup(null)
-                } else {
-                    showPopup({ tipo: 'erro', titulo: 'Erro ao Restaurar', mensagem: resultado.erro || 'Não foi possível restaurar.' })
-                }
-            }
-        })
+        const ok = await confirm(
+            `Todos os dados atuais serão substituídos pelos do backup de ${new Date(selecionado.criado_em).toLocaleString('pt-BR')}. Esta ação não pode ser desfeita.`,
+            'Restaurar Backup Completo'
+        )
+        if (!ok) return
+        setRestaurando(true)
+        const resultado = await restaurarBackupNuvem(selecionado.id)
+        setRestaurando(false)
+        if (resultado.ok) {
+            showSuccess('Dados restaurados com sucesso!', 'Backup Restaurado')
+            setSelecionado(null); setDadosBackup(null)
+        } else {
+            showError(resultado.erro || 'Não foi possível restaurar.')
+        }
     }
 
     async function handleRestaurarSeletivo() {
         const total = contarSelecionados(selecao)
         if (!total) return
-        showPopup({
-            tipo: 'confirmacao',
-            titulo: 'Restaurar Registros Selecionados',
-            mensagem: `${total} registro${total !== 1 ? 's' : ''} serão mesclados com os dados atuais. Registros existentes serão atualizados; nada será apagado.`,
-            onConfirmar: async () => {
-                setRestaurando(true)
-                const payload = construirPayload(dadosBackup, selecao)
-                const resultado = await restaurarSeletivo(payload)
-                setRestaurando(false)
-                if (resultado.ok) {
-                    showPopup({
-                        tipo: 'sucesso',
-                        titulo: 'Restauração Concluída',
-                        mensagem: 'Dados mesclados. Deseja gerar um novo backup do estado atual?',
-                        onConfirmar: handleBackupManual,
-                        labelConfirmar: 'Fazer Backup Agora',
-                    })
-                    setSelecionado(null); setDadosBackup(null)
-                } else {
-                    showPopup({ tipo: 'erro', titulo: 'Erro ao Restaurar', mensagem: resultado.erro || 'Não foi possível restaurar.' })
-                }
-            }
-        })
+        const ok = await confirm(
+            `${total} registro${total !== 1 ? 's' : ''} serão mesclados com os dados atuais. Registros existentes serão atualizados; nada será apagado.`,
+            'Restaurar Registros Selecionados'
+        )
+        if (!ok) return
+        setRestaurando(true)
+        const payload = construirPayload(dadosBackup, selecao)
+        const resultado = await restaurarSeletivo(payload)
+        setRestaurando(false)
+        if (resultado.ok) {
+            showSuccess('Dados mesclados com sucesso!', 'Restauração Concluída')
+            setSelecionado(null); setDadosBackup(null)
+            const fazerBackup = await confirm('Deseja gerar um novo backup do estado atual?', 'Fazer Backup')
+            if (fazerBackup) handleBackupManual()
+        } else {
+            showError(resultado.erro || 'Não foi possível restaurar.')
+        }
     }
 
     const totalSelecionados = contarSelecionados(selecao)
