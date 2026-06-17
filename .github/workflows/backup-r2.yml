@@ -1,0 +1,104 @@
+name: Backup → Cloudflare R2
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 03:00 BRT (06:00 UTC) todos os dias
+  workflow_dispatch:        # disparo manual pelo GitHub
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exportar dados do Supabase
+        id: export
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          FILENAME="backup_${TIMESTAMP}.json"
+
+          node - <<'EOF'
+          const https = require('https')
+          const fs   = require('fs')
+
+          const TABELAS = [
+            'fornecedores','clientes','materiais',
+            'vendas','itens_venda','orcamentos','itens_orcamento',
+            'pedidos','entradas','perdas'
+          ]
+
+          async function buscar(tabela) {
+            return new Promise((resolve, reject) => {
+              const url = new URL(`/rest/v1/${tabela}?select=*`, process.env.SUPABASE_URL)
+              const opts = {
+                hostname: url.hostname,
+                path: url.pathname + url.search,
+                headers: {
+                  apikey: process.env.SUPABASE_SERVICE_KEY,
+                  Authorization: `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
+                  'Range-Unit': 'items',
+                  'Range': '0-9999',
+                }
+              }
+              https.get(opts, res => {
+                let body = ''
+                res.on('data', d => body += d)
+                res.on('end', () => resolve(JSON.parse(body)))
+              }).on('error', reject)
+            })
+          }
+
+          ;(async () => {
+            const dados = { _gerado_em: new Date().toISOString() }
+            for (const t of TABELAS) {
+              dados[t] = await buscar(t)
+              console.log(`  ${t}: ${dados[t].length} registros`)
+            }
+            fs.writeFileSync(process.env.FILENAME, JSON.stringify(dados))
+            console.log('Backup gerado:', process.env.FILENAME)
+          })()
+          EOF
+        shell: bash
+
+      - name: Upload para Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID:         ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET:             ${{ secrets.R2_BUCKET }}
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          FILENAME="backup_${TIMESTAMP}.json"
+
+          aws s3 cp "$FILENAME" \
+            "s3://${R2_BUCKET}/marmoraria-jv/${FILENAME}" \
+            --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
+            --region auto
+
+          echo "✅ Upload concluído: marmoraria-jv/${FILENAME}"
+
+      - name: Manter só os 30 backups mais recentes
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID:         ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET:             ${{ secrets.R2_BUCKET }}
+        run: |
+          LISTA=$(aws s3 ls "s3://${R2_BUCKET}/marmoraria-jv/" \
+            --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
+            --region auto | sort | awk '{print $4}')
+
+          TOTAL=$(echo "$LISTA" | wc -l)
+          EXCLUIR=$((TOTAL - 30))
+
+          if [ "$EXCLUIR" -gt 0 ]; then
+            echo "$LISTA" | head -n "$EXCLUIR" | while read -r arquivo; do
+              aws s3 rm "s3://${R2_BUCKET}/marmoraria-jv/${arquivo}" \
+                --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
+                --region auto
+              echo "Removido: ${arquivo}"
+            done
+          else
+            echo "Nenhum arquivo antigo para remover."
+          fi
