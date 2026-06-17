@@ -132,8 +132,9 @@ function App() {
   const { sessao, loading, logout } = useAuth()
   const [bannerAtualizacao, setBannerAtualizacao] = useState(null)
 
-  // Detecta mudança de versão e limpa cache do SW sem deslogar
+  // Limpa cache do SW ao atualizar versão — só no PWA (não no Capacitor nativo)
   useEffect(() => {
+    if (window.Capacitor?.isNativePlatform?.()) return
     const chave = 'marmoraria_app_version'
     const versaoAnterior = localStorage.getItem(chave)
     localStorage.setItem(chave, __APP_VERSION__)
@@ -166,17 +167,29 @@ function App() {
   // Verificação de atualização para Android (APK sideloaded)
   useEffect(() => {
     if (window.electronAPI) return
-    // só roda dentro do app Android nativo (não no browser)
     if (!window.Capacitor?.isNativePlatform?.()) return
-    fetch('https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest')
+
+    function compararVersao(a, b) {
+      const pa = a.split('.').map(Number)
+      const pb = b.split('.').map(Number)
+      for (let i = 0; i < 3; i++) {
+        if ((pa[i] || 0) > (pb[i] || 0)) return 1
+        if ((pa[i] || 0) < (pb[i] || 0)) return -1
+      }
+      return 0
+    }
+
+    fetch(
+      'https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest',
+      { cache: 'no-cache' }
+    )
       .then(r => r.json())
       .then(release => {
         const nova = release.assets?.find(a => a.name?.endsWith('.apk'))
         if (!nova) return
-        // Extrai versão do nome do arquivo (ex: MarmorariaJV-v1.2.0.apk)
         const match = nova.name.match(/v?(\d+\.\d+\.\d+)/)
         const versaoNova = match ? match[1] : ''
-        if (versaoNova && versaoNova !== __APP_VERSION__) {
+        if (versaoNova && compararVersao(versaoNova, __APP_VERSION__) > 0) {
           setBannerAtualizacao({ plataforma: 'apk', versao: versaoNova, url: nova.browser_download_url })
         }
       })
