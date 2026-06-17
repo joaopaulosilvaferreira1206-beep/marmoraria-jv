@@ -88,16 +88,90 @@ function Layout({ onLogout }) {
 }
 
 function BannerAtualizacao({ info, onFechar }) {
-  const btnFechar = <button onClick={onFechar} className="text-blue-200 hover:text-white text-xs px-2">✕</button>
+  const [fase, setFase] = useState('disponivel') // disponivel | baixando | pronto | erro
+  const [progresso, setProgresso] = useState(0)
+
+  async function baixarApk() {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    const { FileOpener } = await import('@capawesome-team/capacitor-file-opener')
+
+    setFase('baixando')
+    setProgresso(0)
+
+    try {
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.responseType = 'arraybuffer'
+        xhr.onprogress = (e) => {
+          if (e.lengthComputable) setProgresso(Math.round((e.loaded / e.total) * 100))
+        }
+        xhr.onload = async () => {
+          try {
+            const bytes = new Uint8Array(xhr.response)
+            let binary = ''
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+            const base64 = btoa(binary)
+            await Filesystem.writeFile({ path: 'update.apk', directory: Directory.Cache, data: base64 })
+            resolve()
+          } catch (e) { reject(e) }
+        }
+        xhr.onerror = reject
+        xhr.open('GET', info.url)
+        xhr.send()
+      })
+      setFase('pronto')
+    } catch {
+      setFase('erro')
+    }
+  }
+
+  async function instalarApk() {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    const { FileOpener } = await import('@capawesome-team/capacitor-file-opener')
+    const { uri } = await Filesystem.getUri({ path: 'update.apk', directory: Directory.Cache })
+    await FileOpener.openFile({ path: uri, mimeType: 'application/vnd.android.package-archive' })
+  }
+
+  const btnFechar = <button onClick={onFechar} className="text-blue-200 hover:text-white text-xs px-2 shrink-0">✕</button>
 
   if (info.plataforma === 'apk') {
+    if (fase === 'erro') return (
+      <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-red-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+        <span className="text-sm">Falha no download. Tente novamente.</span>
+        <div className="flex gap-2">
+          <button onClick={() => setFase('disponivel')} className="bg-white text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg">Tentar de novo</button>
+          {btnFechar}
+        </div>
+      </div>
+    )
+
+    if (fase === 'baixando') return (
+      <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-700 text-white rounded-xl px-4 py-3 shadow-lg">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Baixando versão {info.versao}…</span>
+          <span className="text-xs text-blue-200">{progresso}%</span>
+        </div>
+        <div className="w-full bg-blue-900 rounded-full h-2">
+          <div className="bg-white rounded-full h-2 transition-all duration-200" style={{ width: `${progresso}%` }} />
+        </div>
+      </div>
+    )
+
+    if (fase === 'pronto') return (
+      <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-green-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+        <span className="text-sm font-medium">Download concluído!</span>
+        <div className="flex gap-2">
+          <button onClick={instalarApk} className="bg-white text-green-600 text-xs font-semibold px-3 py-1.5 rounded-lg">Instalar agora</button>
+          {btnFechar}
+        </div>
+      </div>
+    )
+
     return (
       <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
         <span className="text-sm font-medium">Nova versão {info.versao} disponível!</span>
         <div className="flex gap-2">
-          <a href={info.url} target="_blank" rel="noreferrer" className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg">
-            Baixar APK
-          </a>
+          <button onClick={baixarApk} className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg">Baixar</button>
           {btnFechar}
         </div>
       </div>

@@ -24,6 +24,7 @@
         "@capacitor/core": "^8.3.1",
         "@capacitor/filesystem": "^8.1.2",
         "@capacitor/share": "^8.0.1",
+        "@capawesome-team/capacitor-file-opener": "^8.0.1",
         "@supabase/supabase-js": "^2.104.1",
         "electron-updater": "^6.8.9",
         "idb": "^8.0.3",
@@ -84,7 +85,10 @@
             "releaseType": "release"
         },
         "extraResources": [
-            { "from": "public/icon.ico", "to": "icon.ico" }
+            {
+                "from": "public/icon.ico",
+                "to": "icon.ico"
+            }
         ],
         "win": {
             "target": "nsis",
