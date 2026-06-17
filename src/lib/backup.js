@@ -58,6 +58,12 @@ export async function listarBackupsNuvem() {
     return data || []
 }
 
+export async function excluirBackupNuvem(id) {
+    const { error } = await supabase.from('backups_nuvem').delete().eq('id', id)
+    if (error) return { ok: false, erro: error.message }
+    return { ok: true }
+}
+
 export async function restaurarBackupNuvem(id) {
     try {
         const { data, error } = await supabase

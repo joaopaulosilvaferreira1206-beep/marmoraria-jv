@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
     DatabaseBackup, RotateCcw, CheckCircle, AlertTriangle,
-    Clock, Save, Cloud, Layers, ChevronDown, ChevronRight,
+    Clock, Save, Cloud, Layers, ChevronDown, ChevronRight, Trash2,
 } from 'lucide-react'
 import {
     restaurarBackup, restaurarBackupNuvem, gerarBackup,
     listarBackupsNuvem, carregarDadosBackup, restaurarSeletivo,
+    excluirBackupNuvem,
 } from '../lib/backup'
 import { usePopup } from '../components/PopupProvider'
 
@@ -106,6 +107,31 @@ export default function Backup() {
             const ids = new Set(prev[tabela] || [])
             ids.has(id) ? ids.delete(id) : ids.add(id)
             return { ...prev, [tabela]: ids }
+        })
+    }
+
+    async function handleExcluir(backup, e) {
+        e.stopPropagation()
+        showPopup({
+            tipo: 'confirmacao',
+            titulo: 'Excluir Backup',
+            mensagem: `Excluir o backup de ${backup.data || new Date(backup.criado_em).toLocaleString('pt-BR')}? Esta ação não pode ser desfeita.`,
+            onConfirmar: async () => {
+                let resultado
+                if (backup.tipo === 'nuvem') {
+                    resultado = await excluirBackupNuvem(backup.id)
+                } else {
+                    resultado = await window.electronAPI.excluirBackup(backup.caminho)
+                }
+                if (resultado?.ok) {
+                    if (selecionado?.id === backup.id || selecionado?.caminho === backup.caminho) {
+                        setSelecionado(null); setDadosBackup(null)
+                    }
+                    carregarBackups()
+                } else {
+                    showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível excluir.' })
+                }
+            }
         })
     }
 
@@ -214,20 +240,27 @@ export default function Backup() {
                 ) : (
                     <div className="divide-y divide-gray-700 max-h-64 overflow-y-auto">
                         {backupsNuvem.map((b) => (
-                            <button
+                            <div
                                 key={b.id}
                                 onClick={() => selecionarBackup({ ...b, tipo: 'nuvem' })}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
                                     selecionado?.id === b.id ? 'bg-blue-600/20 border-l-2 border-blue-500' : 'hover:bg-gray-700/50'
                                 }`}
                             >
                                 {selecionado?.id === b.id
                                     ? <CheckCircle className="text-blue-400 shrink-0" size={18} />
                                     : <Cloud className="text-gray-500 shrink-0" size={18} />}
-                                <p className="text-gray-200 text-sm">
+                                <p className="text-gray-200 text-sm flex-1">
                                     {new Date(b.criado_em).toLocaleString('pt-BR')}
                                 </p>
-                            </button>
+                                <button
+                                    onClick={(e) => handleExcluir({ ...b, tipo: 'nuvem' }, e)}
+                                    className="text-gray-600 hover:text-red-400 transition-colors p-1 rounded"
+                                    title="Excluir backup"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -251,21 +284,28 @@ export default function Backup() {
                     ) : (
                         <div className="divide-y divide-gray-700 max-h-64 overflow-y-auto">
                             {backups.map((b) => (
-                                <button
+                                <div
                                     key={b.caminho}
                                     onClick={() => selecionarBackup({ ...b, tipo: 'local' })}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
                                         selecionado?.caminho === b.caminho ? 'bg-blue-600/20 border-l-2 border-blue-500' : 'hover:bg-gray-700/50'
                                     }`}
                                 >
                                     {selecionado?.caminho === b.caminho
                                         ? <CheckCircle className="text-blue-400 shrink-0" size={18} />
                                         : <DatabaseBackup className="text-gray-500 shrink-0" size={18} />}
-                                    <div>
+                                    <div className="flex-1 min-w-0">
                                         <p className="text-gray-200 text-sm font-medium">{b.data.replace('T', ' às ')}</p>
-                                        <p className="text-gray-500 text-xs font-mono">{b.nome}</p>
+                                        <p className="text-gray-500 text-xs font-mono truncate">{b.nome}</p>
                                     </div>
-                                </button>
+                                    <button
+                                        onClick={(e) => handleExcluir({ ...b, tipo: 'local' }, e)}
+                                        className="text-gray-600 hover:text-red-400 transition-colors p-1 rounded shrink-0"
+                                        title="Excluir backup"
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     )}
