@@ -214,6 +214,15 @@ function App() {
   const { sessao, loading, logout } = useAuth()
   const [bannerAtualizacao, setBannerAtualizacao] = useState(null)
 
+  // Remove SW legado de builds anteriores que incluíam PWA no Capacitor
+  useEffect(() => {
+    if (window.Capacitor?.isNativePlatform?.() && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then(regs => regs.forEach(reg => reg.unregister()))
+        .catch(() => {})
+    }
+  }, [])
+
   // Limpa cache do SW ao atualizar versão — só no PWA (não no Capacitor nativo)
   useEffect(() => {
     if (window.Capacitor?.isNativePlatform?.()) return

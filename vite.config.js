@@ -8,12 +8,13 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf8'))
 
 export default defineConfig(() => {
   const isElectron = process.env.BUILD_TARGET === 'electron'
+  const isCapacitor = process.env.BUILD_TARGET === 'capacitor'
 
   return {
     base: isElectron ? './' : '/',
     plugins: [
       react(),
-      !isElectron && VitePWA({
+      !isElectron && !isCapacitor && VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
         workbox: {
