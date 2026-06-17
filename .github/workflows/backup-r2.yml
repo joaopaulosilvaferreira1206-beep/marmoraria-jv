@@ -74,7 +74,7 @@ jobs:
           aws s3 cp "$FILENAME" \
             "s3://${R2_BUCKET}/marmoraria-jv/${FILENAME}" \
             --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
-            --region auto
+            --region us-east-1
 
           echo "✅ Upload concluído: marmoraria-jv/${FILENAME}"
 
@@ -87,7 +87,7 @@ jobs:
         run: |
           LISTA=$(aws s3 ls "s3://${R2_BUCKET}/marmoraria-jv/" \
             --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
-            --region auto | sort | awk '{print $4}')
+            --region us-east-1 | sort | awk '{print $4}')
 
           TOTAL=$(echo "$LISTA" | wc -l)
           EXCLUIR=$((TOTAL - 30))
@@ -96,7 +96,7 @@ jobs:
             echo "$LISTA" | head -n "$EXCLUIR" | while read -r arquivo; do
               aws s3 rm "s3://${R2_BUCKET}/marmoraria-jv/${arquivo}" \
                 --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
-                --region auto
+                --region us-east-1
               echo "Removido: ${arquivo}"
             done
           else
