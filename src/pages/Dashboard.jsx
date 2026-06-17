@@ -96,7 +96,10 @@ export default function Dashboard() {
         (m) => m.minimo && m.saldo <= m.minimo,
       );
       const vendasMes = (vendasAno || [])
-        .filter((v) => Number(v.data?.slice(5, 7)) - 1 === mesAtual)
+        .filter((v) => {
+          const d = new Date(v.data + 'T00:00:00')
+          return d.getFullYear() === anoAtual && d.getMonth() === mesAtual
+        })
         .reduce((acc, v) => acc + (v.valor_total || 0), 0);
 
       setResumo({
@@ -226,35 +229,40 @@ export default function Dashboard() {
           </div>
         </div>
         {(() => {
+          const BAR_H = 100;
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
-            <div className="flex items-end gap-6 h-40">
-              {mesMeses.map((l, i) => (
-                <div key={l.chave} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full flex items-end gap-1" style={{ height: "100px" }}>
-                    <div className="flex-1 flex flex-col justify-end">
-                      {vendasPorMes[i] > 0 && (
-                        <p className="text-xs text-green-400 text-center mb-0.5">{`R$ ${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
-                      )}
-                      <div
-                        className="w-full bg-green-500 hover:bg-green-400 rounded-t transition-all"
-                        style={{ height: `${Math.max((vendasPorMes[i] / maxV) * 100, vendasPorMes[i] > 0 ? 4 : 0)}%` }}
-                      />
+            <div className="flex items-end gap-4" style={{ height: `${BAR_H + 32}px` }}>
+              {mesMeses.map((l, i) => {
+                const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
+                const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
+                return (
+                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full flex items-end gap-1" style={{ height: `${BAR_H}px` }}>
+                      <div className="flex-1 flex flex-col items-center justify-end">
+                        {vendasPorMes[i] > 0 && (
+                          <p className="text-xs text-green-400 text-center mb-0.5 leading-none">{`R$${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
+                        )}
+                        <div
+                          className="w-full bg-green-500 hover:bg-green-400 rounded-t transition-all"
+                          style={{ height: `${hV}px` }}
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-end">
+                        {perdasPorMes[i] > 0 && (
+                          <p className="text-xs text-red-400 text-center mb-0.5 leading-none">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
+                        )}
+                        <div
+                          className="w-full bg-red-500 hover:bg-red-400 rounded-t transition-all"
+                          style={{ height: `${hP}px` }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 flex flex-col justify-end">
-                      {perdasPorMes[i] > 0 && (
-                        <p className="text-xs text-red-400 text-center mb-0.5">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
-                      )}
-                      <div
-                        className="w-full bg-red-500 hover:bg-red-400 rounded-t transition-all"
-                        style={{ height: `${Math.max((perdasPorMes[i] / maxP) * 100, perdasPorMes[i] > 0 ? 4 : 0)}%` }}
-                      />
-                    </div>
+                    <p className="text-xs text-gray-400">{l.mes}</p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{l.mes}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           );
         })()}
