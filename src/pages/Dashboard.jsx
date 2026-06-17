@@ -62,7 +62,7 @@ export default function Dashboard() {
     const inicioMes = new Date(anoAtual, mesAtual, 1)
       .toISOString()
       .split("T")[0];
-    const inicio3Meses = new Date(anoAtual, mesAtual - 2, 1).toISOString().split("T")[0];
+    const inicio5Meses = new Date(anoAtual, mesAtual - 4, 1).toISOString().split("T")[0];
     const inicioAno = new Date(anoAtual, 0, 1).toISOString().split("T")[0];
 
     const [
@@ -83,12 +83,12 @@ export default function Dashboard() {
       supabase
         .from("vendas")
         .select("data, valor_total")
-        .gte("data", inicio3Meses),
+        .gte("data", inicio5Meses),
       supabase.from("orcamentos").select("id, status").eq("status", "pendente"),
       supabase
         .from("perdas")
         .select("data, quantidade")
-        .gte("data", inicio3Meses),
+        .gte("data", inicio5Meses),
     ]);
 
     if (materiais) {
@@ -117,13 +117,13 @@ export default function Dashboard() {
       setAlertas(estoqueBaixo.slice(0, 5));
     }
 
-    // Agrupa vendas e perdas por mês (últimos 3 meses)
+    // Agrupa vendas e perdas por mês (últimos 5 meses)
     {
       const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
       const labels = [];
       const vendasGrp = {};
       const perdasGrp = {};
-      for (let i = 2; i >= 0; i--) {
+      for (let i = 4; i >= 0; i--) {
         const d = new Date(anoAtual, mesAtual - i, 1);
         const chave = `${d.getFullYear()}-${d.getMonth()}`;
         vendasGrp[chave] = 0;
@@ -221,7 +221,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
             <DollarSign size={20} className="text-green-400" />
-            Vendas × Perdas (últimos 3 meses)
+            Vendas × Perdas (últimos 5 meses)
           </h3>
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> Ganho (R$)</span>
