@@ -217,8 +217,8 @@ export default function Dashboard() {
       </div>
 
       {/* Gráfico vendas x perdas (últimos 3 meses) */}
-      <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
           <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
             <DollarSign size={20} className="text-green-400" />
             Vendas × Perdas (últimos 5 meses)
@@ -233,7 +233,7 @@ export default function Dashboard() {
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
-            <div className="flex items-end gap-4" style={{ height: `${BAR_H + 32}px` }}>
+            <div className="flex items-end gap-2 w-full" style={{ height: `${BAR_H + 32}px` }}>
               {mesMeses.map((l, i) => {
                 const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
                 const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
