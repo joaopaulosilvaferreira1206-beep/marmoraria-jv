@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-    DatabaseBackup, RotateCcw, CheckCircle, AlertTriangle,
-    Clock, Save, Cloud, Layers, ChevronDown, ChevronRight, Trash2,
+    RotateCcw, CheckCircle, AlertTriangle,
+    Cloud, Layers, ChevronDown, ChevronRight, Trash2, Save,
 } from 'lucide-react'
 import {
-    restaurarBackup, restaurarBackupNuvem, gerarBackup,
+    restaurarBackupNuvem, gerarBackup,
     listarBackupsNuvem, carregarDadosBackup, restaurarSeletivo,
     excluirBackupNuvem,
 } from '../lib/backup'
@@ -38,7 +38,6 @@ function construirPayload(dadosBackup, selecao) {
 }
 
 export default function Backup() {
-    const [backups, setBackups] = useState([])
     const [backupsNuvem, setBackupsNuvem] = useState([])
     const [restaurando, setRestaurando] = useState(false)
     const [salvando, setSalvando] = useState(false)
@@ -46,18 +45,13 @@ export default function Backup() {
     const [dadosBackup, setDadosBackup] = useState(null)
     const [carregandoDados, setCarregandoDados] = useState(false)
     const [modoRestauracao, setModoRestauracao] = useState('completo')
-    const [selecao, setSelecao] = useState({})        // { [tabela]: Set<id> }
-    const [expandida, setExpandida] = useState(null)  // tabela com lista aberta
+    const [selecao, setSelecao] = useState({})
+    const [expandida, setExpandida] = useState(null)
     const { showPopup } = usePopup()
-    const isElectron = !!window.electronAPI
 
     useEffect(() => { carregarBackups() }, [])
 
     async function carregarBackups() {
-        if (isElectron) {
-            const lista = await window.electronAPI.listarBackups()
-            setBackups(lista)
-        }
         const nuvem = await listarBackupsNuvem()
         setBackupsNuvem(nuvem)
     }
@@ -76,7 +70,6 @@ export default function Backup() {
         try {
             const dados = await carregarDadosBackup(selecionado)
             setDadosBackup(dados)
-            // pré-seleciona todos os registros de todas as tabelas com dados
             const selecaoInicial = {}
             for (const tabela of Object.keys(TABELAS_CONFIG)) {
                 if (dados[tabela]?.length) {
@@ -115,18 +108,11 @@ export default function Backup() {
         showPopup({
             tipo: 'confirmacao',
             titulo: 'Excluir Backup',
-            mensagem: `Excluir o backup de ${backup.data || new Date(backup.criado_em).toLocaleString('pt-BR')}? Esta ação não pode ser desfeita.`,
+            mensagem: `Excluir o backup de ${new Date(backup.criado_em).toLocaleString('pt-BR')}? Esta ação não pode ser desfeita.`,
             onConfirmar: async () => {
-                let resultado
-                if (backup.tipo === 'nuvem') {
-                    resultado = await excluirBackupNuvem(backup.id)
-                } else {
-                    resultado = await window.electronAPI.excluirBackup(backup.caminho)
-                }
+                const resultado = await excluirBackupNuvem(backup.id)
                 if (resultado?.ok) {
-                    if (selecionado?.id === backup.id || selecionado?.caminho === backup.caminho) {
-                        setSelecionado(null); setDadosBackup(null)
-                    }
+                    if (selecionado?.id === backup.id) { setSelecionado(null); setDadosBackup(null) }
                     carregarBackups()
                 } else {
                     showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível excluir.' })
@@ -140,7 +126,7 @@ export default function Backup() {
         try {
             const resultado = await gerarBackup()
             if (resultado?.ok) {
-                showPopup({ tipo: 'sucesso', titulo: 'Backup Salvo', mensagem: isElectron ? 'Backup salvo localmente!' : 'Backup salvo na nuvem!' })
+                showPopup({ tipo: 'sucesso', titulo: 'Backup Salvo', mensagem: 'Backup salvo na nuvem!' })
                 carregarBackups()
             } else {
                 showPopup({ tipo: 'erro', titulo: 'Erro', mensagem: resultado?.erro || 'Não foi possível gerar o backup.' })
@@ -152,16 +138,13 @@ export default function Backup() {
 
     async function handleRestaurarCompleto() {
         if (!selecionado) return
-        const data = selecionado.data || new Date(selecionado.criado_em).toLocaleString('pt-BR')
         showPopup({
             tipo: 'confirmacao',
             titulo: 'Restaurar Backup Completo',
-            mensagem: `Todos os dados atuais serão substituídos pelos do backup de ${data}. Esta ação não pode ser desfeita.`,
+            mensagem: `Todos os dados atuais serão substituídos pelos do backup de ${new Date(selecionado.criado_em).toLocaleString('pt-BR')}. Esta ação não pode ser desfeita.`,
             onConfirmar: async () => {
                 setRestaurando(true)
-                const resultado = selecionado.tipo === 'nuvem'
-                    ? await restaurarBackupNuvem(selecionado.id)
-                    : await restaurarBackup(selecionado.caminho)
+                const resultado = await restaurarBackupNuvem(selecionado.id)
                 setRestaurando(false)
                 if (resultado.ok) {
                     showPopup({ tipo: 'sucesso', titulo: 'Backup Restaurado', mensagem: 'Dados restaurados com sucesso!' })
@@ -208,41 +191,39 @@ export default function Backup() {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-100">Backup e Restauração</h1>
-                    <p className="text-gray-400 mt-1">
-                        {isElectron ? 'Backup local automático ao abrir o app e a cada 24h.' : 'Backup na nuvem — salvo no Supabase.'}
-                    </p>
+                    <p className="text-gray-400 mt-1">Backup automático diário às 03h — salvo na nuvem.</p>
                 </div>
                 <button
                     onClick={handleBackupManual}
                     disabled={salvando}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shrink-0"
                 >
-                    {isElectron ? <Save size={16} /> : <Cloud size={16} />}
+                    <Save size={16} />
                     {salvando ? 'Salvando…' : 'Fazer Backup Agora'}
                 </button>
             </div>
 
-            {/* Backups na nuvem */}
+            {/* Lista de backups */}
             <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-gray-700 flex items-center gap-2">
                     <Cloud size={18} className="text-blue-400" />
                     <div>
                         <h2 className="text-gray-100 font-semibold">Backups na Nuvem</h2>
-                        <p className="text-gray-400 text-sm">Salvos no Supabase — acessíveis de qualquer dispositivo</p>
+                        <p className="text-gray-400 text-sm">Acessíveis de qualquer dispositivo · máximo 30 backups</p>
                     </div>
                 </div>
                 {backupsNuvem.length === 0 ? (
                     <div className="p-8 text-center">
                         <Cloud className="mx-auto text-gray-600 mb-2" size={32} />
-                        <p className="text-gray-400">Nenhum backup na nuvem.</p>
+                        <p className="text-gray-400">Nenhum backup ainda.</p>
                         <p className="text-gray-500 text-sm mt-1">Clique em "Fazer Backup Agora" para criar um.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-700 max-h-64 overflow-y-auto">
+                    <div className="divide-y divide-gray-700 max-h-72 overflow-y-auto">
                         {backupsNuvem.map((b) => (
                             <div
                                 key={b.id}
-                                onClick={() => selecionarBackup({ ...b, tipo: 'nuvem' })}
+                                onClick={() => selecionarBackup(b)}
                                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
                                     selecionado?.id === b.id ? 'bg-blue-600/20 border-l-2 border-blue-500' : 'hover:bg-gray-700/50'
                                 }`}
@@ -254,7 +235,7 @@ export default function Backup() {
                                     {new Date(b.criado_em).toLocaleString('pt-BR')}
                                 </p>
                                 <button
-                                    onClick={(e) => handleExcluir({ ...b, tipo: 'nuvem' }, e)}
+                                    onClick={(e) => handleExcluir(b, e)}
                                     className="text-gray-600 hover:text-red-400 transition-colors p-1 rounded"
                                     title="Excluir backup"
                                 >
@@ -265,52 +246,6 @@ export default function Backup() {
                     </div>
                 )}
             </div>
-
-            {/* Backups locais (só Electron) */}
-            {isElectron && (
-                <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-gray-700 flex items-center gap-2">
-                        <DatabaseBackup size={18} className="text-gray-400" />
-                        <div>
-                            <h2 className="text-gray-100 font-semibold">Backups Locais</h2>
-                            <p className="text-gray-400 text-sm font-mono text-xs">Documentos\MarmorariaJV\backups\</p>
-                        </div>
-                    </div>
-                    {backups.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <Clock className="mx-auto text-gray-600 mb-2" size={32} />
-                            <p className="text-gray-400">Nenhum backup local encontrado.</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-gray-700 max-h-64 overflow-y-auto">
-                            {backups.map((b) => (
-                                <div
-                                    key={b.caminho}
-                                    onClick={() => selecionarBackup({ ...b, tipo: 'local' })}
-                                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                                        selecionado?.caminho === b.caminho ? 'bg-blue-600/20 border-l-2 border-blue-500' : 'hover:bg-gray-700/50'
-                                    }`}
-                                >
-                                    {selecionado?.caminho === b.caminho
-                                        ? <CheckCircle className="text-blue-400 shrink-0" size={18} />
-                                        : <DatabaseBackup className="text-gray-500 shrink-0" size={18} />}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-gray-200 text-sm font-medium">{b.data.replace('T', ' às ')}</p>
-                                        <p className="text-gray-500 text-xs font-mono truncate">{b.nome}</p>
-                                    </div>
-                                    <button
-                                        onClick={(e) => handleExcluir({ ...b, tipo: 'local' }, e)}
-                                        className="text-gray-600 hover:text-red-400 transition-colors p-1 rounded shrink-0"
-                                        title="Excluir backup"
-                                    >
-                                        <Trash2 size={15} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Painel de restauração */}
             {selecionado && (
@@ -346,7 +281,6 @@ export default function Backup() {
                         </button>
                     </div>
 
-                    {/* Modo completo */}
                     {modoRestauracao === 'completo' && (
                         <div className="px-4 pb-4 flex items-center justify-between gap-4">
                             <p className="text-yellow-200 text-sm">
@@ -363,7 +297,6 @@ export default function Backup() {
                         </div>
                     )}
 
-                    {/* Modo seletivo */}
                     {modoRestauracao === 'seletivo' && dadosBackup && (
                         <div className="px-4 pb-4 space-y-2">
                             <p className="text-gray-400 text-sm pb-1">
@@ -380,8 +313,7 @@ export default function Backup() {
 
                                 return (
                                     <div key={tabela} className="border border-gray-700 rounded-lg overflow-hidden">
-                                        {/* Cabeçalho da tabela */}
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-gray-750">
+                                        <div className="flex items-center gap-2 px-3 py-2">
                                             <input
                                                 type="checkbox"
                                                 checked={allChecked}
@@ -403,7 +335,6 @@ export default function Backup() {
                                             </button>
                                         </div>
 
-                                        {/* Lista de registros */}
                                         {aberta && (
                                             <div className="divide-y divide-gray-700/50 max-h-48 overflow-y-auto bg-gray-900/30">
                                                 {registros.map(r => (
