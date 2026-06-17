@@ -72,6 +72,44 @@ export async function restaurarBackupNuvem(id) {
     }
 }
 
+export async function carregarDadosBackup(origem) {
+    if (origem.tipo === 'nuvem') {
+        const { data, error } = await supabase
+            .from('backups_nuvem')
+            .select('dados')
+            .eq('id', origem.id)
+            .single()
+        if (error) throw error
+        return data.dados
+    }
+    const { ok, dados, erro } = await window.electronAPI.lerBackup(origem.caminho)
+    if (!ok) throw new Error(erro)
+    return dados
+}
+
+// registrosPorTabela: { clientes: [rec, ...], materiais: [rec, ...], ... }
+export async function restaurarSeletivo(registrosPorTabela) {
+    const ORDEM_INSERCAO = [
+        'fornecedores', 'clientes', 'materiais',
+        'vendas', 'orcamentos', 'pedidos',
+        'entradas', 'perdas',
+        'itens_venda', 'itens_orcamento', 'itens_pedido',
+    ]
+    try {
+        for (const tabela of ORDEM_INSERCAO) {
+            const registros = registrosPorTabela[tabela]
+            if (!registros?.length) continue
+            const { error } = await supabase
+                .from(tabela)
+                .upsert(registros, { onConflict: 'id' })
+            if (error) throw error
+        }
+        return { ok: true }
+    } catch (e) {
+        return { ok: false, erro: e.message }
+    }
+}
+
 export async function restaurarBackup(caminho) {
     try {
         const { ok, dados, erro } = await window.electronAPI.lerBackup(caminho)

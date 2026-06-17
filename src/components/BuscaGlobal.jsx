@@ -96,10 +96,20 @@ export default function BuscaGlobal({ aberta, onFechar }) {
 
     const termoLower = termo.toLowerCase();
 
+    function porRelevancia(campo) {
+      return (a, b) => {
+        const aStarts = String(a[campo] || "").toLowerCase().startsWith(termoLower);
+        const bStarts = String(b[campo] || "").toLowerCase().startsWith(termoLower);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return 0;
+      };
+    }
+
     setResultados({
-      clientes: clientes || [],
-      materiais: materiais || [],
-      fornecedores: fornecedores || [],
+      clientes: (clientes || []).sort(porRelevancia("nome")),
+      materiais: (materiais || []).sort(porRelevancia("descricao")),
+      fornecedores: (fornecedores || []).sort(porRelevancia("nome")),
       vendas: (vendas || [])
         .filter((v) => v.clientes?.nome?.toLowerCase().includes(termoLower))
         .slice(0, 4),
