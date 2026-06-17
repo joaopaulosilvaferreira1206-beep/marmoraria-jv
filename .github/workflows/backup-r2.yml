@@ -15,8 +15,8 @@ jobs:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
-          FILENAME="backup_${TIMESTAMP}.json"
+          export TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          export FILENAME="backup_${TIMESTAMP}.json"
 
           node - <<'EOF'
           const https = require('https')
