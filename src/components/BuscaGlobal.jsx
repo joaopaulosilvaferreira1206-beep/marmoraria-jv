@@ -60,56 +60,37 @@ export default function BuscaGlobal({ aberta, onFechar }) {
 
   async function buscar(termo) {
     setLoading(true);
-    const q = `%${termo}%`;
 
-    const [
-      { data: clientes },
-      { data: materiais },
-      { data: fornecedores },
-      { data: vendas },
-      { data: orcamentos },
-    ] = await Promise.all([
-      supabase
-        .from("clientes")
-        .select("id, nome, telefone")
-        .ilike("nome", q)
-        .limit(4),
-      supabase
-        .from("materiais")
-        .select("id, descricao, sku, saldo")
-        .ilike("descricao", `%${termo}%`)
-        .limit(4),
-      supabase
-        .from("fornecedores")
-        .select("id, nome, telefone")
-        .ilike("nome", q)
-        .limit(4),
-      supabase
-        .from("vendas")
-        .select("id, data, valor_total, clientes(nome)")
-        .limit(20),
-      supabase
-        .from("orcamentos")
-        .select("id, data, valor_total, status, clientes(nome)")
-        .limit(20),
-    ]);
+    // Busca em duas etapas por tabela: primeiro startsWith, depois contains para completar até 4
+    async function buscarComRelevancia(tabela, campo, select) {
+      const [{ data: starts }, { data: contains }] = await Promise.all([
+        supabase.from(tabela).select(select).ilike(campo, `${termo}%`).limit(4),
+        supabase.from(tabela).select(select).ilike(campo, `%${termo}%`).not(campo, "ilike", `${termo}%`).limit(4),
+      ]);
+      const vistos = new Set();
+      const merged = [];
+      for (const r of [...(starts || []), ...(contains || [])]) {
+        if (!vistos.has(r.id)) { vistos.add(r.id); merged.push(r); }
+        if (merged.length === 4) break;
+      }
+      return merged;
+    }
 
     const termoLower = termo.toLowerCase();
 
-    function porRelevancia(campo) {
-      return (a, b) => {
-        const aStarts = String(a[campo] || "").toLowerCase().startsWith(termoLower);
-        const bStarts = String(b[campo] || "").toLowerCase().startsWith(termoLower);
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
-        return 0;
-      };
-    }
+    const [clientes, materiais, fornecedores, { data: vendas }, { data: orcamentos }] =
+      await Promise.all([
+        buscarComRelevancia("clientes", "nome", "id, nome, telefone"),
+        buscarComRelevancia("materiais", "descricao", "id, descricao, sku, saldo"),
+        buscarComRelevancia("fornecedores", "nome", "id, nome, telefone"),
+        supabase.from("vendas").select("id, data, valor_total, clientes(nome)").limit(20),
+        supabase.from("orcamentos").select("id, data, valor_total, status, clientes(nome)").limit(20),
+      ]);
 
     setResultados({
-      clientes: (clientes || []).sort(porRelevancia("nome")),
-      materiais: (materiais || []).sort(porRelevancia("descricao")),
-      fornecedores: (fornecedores || []).sort(porRelevancia("nome")),
+      clientes,
+      materiais,
+      fornecedores,
       vendas: (vendas || [])
         .filter((v) => v.clientes?.nome?.toLowerCase().includes(termoLower))
         .slice(0, 4),
