@@ -79,18 +79,13 @@ export async function restaurarBackupNuvem(id) {
 }
 
 export async function carregarDadosBackup(origem) {
-    if (origem.tipo === 'nuvem') {
-        const { data, error } = await supabase
-            .from('backups_nuvem')
-            .select('dados')
-            .eq('id', origem.id)
-            .single()
-        if (error) throw error
-        return data.dados
-    }
-    const { ok, dados, erro } = await window.electronAPI.lerBackup(origem.caminho)
-    if (!ok) throw new Error(erro)
-    return dados
+    const { data, error } = await supabase
+        .from('backups_nuvem')
+        .select('dados')
+        .eq('id', origem.id)
+        .single()
+    if (error) throw error
+    return data.dados
 }
 
 // registrosPorTabela: { clientes: [rec, ...], materiais: [rec, ...], ... }
