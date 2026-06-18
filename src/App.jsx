@@ -105,38 +105,30 @@ function BannerAtualizacao({ info, onFechar }) {
 
   async function baixarApk() {
     const { Filesystem, Directory } = await import("@capacitor/filesystem");
+    const { CapacitorHttp } = await import("@capacitor/core");
 
     setFase("baixando");
     setProgresso(0);
 
     try {
-      const buffer = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", info.url, true);
-        xhr.responseType = "arraybuffer";
-        xhr.onprogress = (e) => {
-          if (e.lengthComputable)
-            setProgresso(Math.round((e.loaded / e.total) * 100));
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
-          else reject(new Error(`HTTP ${xhr.status}`));
-        };
-        xhr.onerror = () => reject(new Error("network error"));
-        xhr.send();
+      // CapacitorHttp faz o request fora do WebView — sem restrição de CORS
+      const resp = await CapacitorHttp.request({
+        method: "GET",
+        url: info.url,
+        responseType: "blob",
       });
 
-      const total = new Uint8Array(buffer);
-      const BLOCO = 8192;
-      let base64 = "";
-      for (let i = 0; i < total.byteLength; i += BLOCO) {
-        base64 += btoa(String.fromCharCode(...total.subarray(i, i + BLOCO)));
+      if (resp.status < 200 || resp.status >= 300) {
+        throw new Error(`HTTP ${resp.status}`);
       }
 
+      setProgresso(100);
+
+      // resp.data já é base64 quando responseType é 'blob'
       await Filesystem.writeFile({
         path: "update.apk",
         directory: Directory.Cache,
-        data: base64,
+        data: resp.data,
       });
       setFase("pronto");
     } catch {
