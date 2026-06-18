@@ -233,33 +233,23 @@ export default function Dashboard() {
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
-            <div className="flex items-end gap-2 w-full">
+            <div className="flex items-end gap-1 w-full" style={{ height: `${BAR_H + 20}px` }}>
               {mesMeses.map((l, i) => {
                 const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
                 const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
                 return (
-                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex items-end gap-1" style={{ height: `${BAR_H + 20}px` }}>
-                      <div className="flex-1 flex flex-col items-end justify-end">
-                        {vendasPorMes[i] > 0 && (
-                          <p className="text-xs text-green-400 text-center w-full mb-0.5 leading-none truncate">{`R$${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
-                        )}
-                        <div
-                          className="w-full bg-green-500 hover:bg-green-400 rounded-t transition-all"
-                          style={{ height: `${hV}px` }}
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col items-end justify-end">
-                        {perdasPorMes[i] > 0 && (
-                          <p className="text-xs text-red-400 text-center w-full mb-0.5 leading-none truncate">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
-                        )}
-                        <div
-                          className="w-full bg-red-500 hover:bg-red-400 rounded-t transition-all"
-                          style={{ height: `${hP}px` }}
-                        />
-                      </div>
+                  <div key={l.chave} className="flex-1 flex flex-col items-center justify-end gap-1 min-w-0">
+                    <div className="w-full flex items-end gap-0.5" style={{ height: `${BAR_H}px` }}>
+                      <div
+                        className="flex-1 bg-green-500 rounded-t transition-all"
+                        style={{ height: `${hV}px` }}
+                      />
+                      <div
+                        className="flex-1 bg-red-500 rounded-t transition-all"
+                        style={{ height: `${hP}px` }}
+                      />
                     </div>
-                    <p className="text-xs text-gray-400">{l.mes}</p>
+                    <p className="text-xs text-gray-400 truncate w-full text-center">{l.mes}</p>
                   </div>
                 );
               })}
