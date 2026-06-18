@@ -217,7 +217,7 @@ export default function Dashboard() {
       </div>
 
       {/* Gráfico vendas x perdas (últimos 3 meses) */}
-      <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700 overflow-hidden">
+      <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
           <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
             <DollarSign size={20} className="text-green-400" />
@@ -229,29 +229,29 @@ export default function Dashboard() {
           </div>
         </div>
         {(() => {
-          const BAR_H = 100;
+          const BAR_H = 120;
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
-            <div className="flex items-end gap-2 w-full" style={{ height: `${BAR_H + 32}px` }}>
+            <div className="flex items-end gap-2 w-full">
               {mesMeses.map((l, i) => {
                 const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
                 const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
                 return (
                   <div key={l.chave} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex items-end gap-1" style={{ height: `${BAR_H}px` }}>
-                      <div className="flex-1 flex flex-col items-center justify-end">
+                    <div className="w-full flex items-end gap-1" style={{ height: `${BAR_H + 20}px` }}>
+                      <div className="flex-1 flex flex-col items-end justify-end">
                         {vendasPorMes[i] > 0 && (
-                          <p className="text-xs text-green-400 text-center mb-0.5 leading-none">{`R$${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
+                          <p className="text-xs text-green-400 text-center w-full mb-0.5 leading-none truncate">{`R$${(vendasPorMes[i]/1000).toFixed(1)}k`}</p>
                         )}
                         <div
                           className="w-full bg-green-500 hover:bg-green-400 rounded-t transition-all"
                           style={{ height: `${hV}px` }}
                         />
                       </div>
-                      <div className="flex-1 flex flex-col items-center justify-end">
+                      <div className="flex-1 flex flex-col items-end justify-end">
                         {perdasPorMes[i] > 0 && (
-                          <p className="text-xs text-red-400 text-center mb-0.5 leading-none">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
+                          <p className="text-xs text-red-400 text-center w-full mb-0.5 leading-none truncate">{`${perdasPorMes[i].toFixed(1)}m²`}</p>
                         )}
                         <div
                           className="w-full bg-red-500 hover:bg-red-400 rounded-t transition-all"
