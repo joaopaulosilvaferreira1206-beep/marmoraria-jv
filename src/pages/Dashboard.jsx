@@ -233,23 +233,23 @@ export default function Dashboard() {
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
-            <div className="flex items-end gap-1 w-full" style={{ height: `${BAR_H + 20}px` }}>
+            <div className="flex items-end gap-1 w-full">
               {mesMeses.map((l, i) => {
                 const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
                 const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
                 return (
-                  <div key={l.chave} className="flex-1 flex flex-col items-center justify-end gap-1 min-w-0">
+                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-0.5 min-w-0 overflow-hidden">
+                    <p className="text-green-400 w-full text-center leading-none truncate" style={{ fontSize: '9px' }}>
+                      {vendasPorMes[i] > 0 ? `R$${(vendasPorMes[i]/1000).toFixed(1)}k` : ''}
+                    </p>
+                    <p className="text-red-400 w-full text-center leading-none truncate" style={{ fontSize: '9px' }}>
+                      {perdasPorMes[i] > 0 ? `${perdasPorMes[i].toFixed(1)}m²` : ''}
+                    </p>
                     <div className="w-full flex items-end gap-0.5" style={{ height: `${BAR_H}px` }}>
-                      <div
-                        className="flex-1 bg-green-500 rounded-t transition-all"
-                        style={{ height: `${hV}px` }}
-                      />
-                      <div
-                        className="flex-1 bg-red-500 rounded-t transition-all"
-                        style={{ height: `${hP}px` }}
-                      />
+                      <div className="flex-1 bg-green-500 rounded-t transition-all" style={{ height: `${hV}px` }} />
+                      <div className="flex-1 bg-red-500 rounded-t transition-all" style={{ height: `${hP}px` }} />
                     </div>
-                    <p className="text-xs text-gray-400 truncate w-full text-center">{l.mes}</p>
+                    <p className="text-gray-400 w-full text-center truncate" style={{ fontSize: '10px' }}>{l.mes}</p>
                   </div>
                 );
               })}
