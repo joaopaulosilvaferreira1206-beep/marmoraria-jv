@@ -229,7 +229,7 @@ export default function Dashboard() {
           </div>
         </div>
         {(() => {
-          const BAR_H = 120;
+          const BAR_H = 80;
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
           return (
