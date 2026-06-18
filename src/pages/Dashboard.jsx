@@ -232,22 +232,27 @@ export default function Dashboard() {
           const BAR_H = 80;
           const maxV = Math.max(...vendasPorMes, 1);
           const maxP = Math.max(...perdasPorMes, 1);
+          const LABEL_H = 28;
           return (
             <div className="flex items-end gap-1 w-full">
               {mesMeses.map((l, i) => {
                 const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
                 const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
                 return (
-                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-0.5 min-w-0 overflow-hidden">
-                    <p className="text-green-400 w-full text-center leading-none truncate" style={{ fontSize: '9px' }}>
-                      {vendasPorMes[i] > 0 ? `R$${(vendasPorMes[i]/1000).toFixed(1)}k` : ''}
-                    </p>
-                    <p className="text-red-400 w-full text-center leading-none truncate" style={{ fontSize: '9px' }}>
-                      {perdasPorMes[i] > 0 ? `${perdasPorMes[i].toFixed(1)}m²` : ''}
-                    </p>
-                    <div className="w-full flex items-end gap-0.5" style={{ height: `${BAR_H}px` }}>
-                      <div className="flex-1 bg-green-500 rounded-t transition-all" style={{ height: `${hV}px` }} />
-                      <div className="flex-1 bg-red-500 rounded-t transition-all" style={{ height: `${hP}px` }} />
+                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-0.5 min-w-0">
+                    <div className="w-full flex items-end gap-0.5" style={{ height: `${BAR_H + LABEL_H}px` }}>
+                      <div className="flex-1 flex flex-col items-center justify-end min-w-0">
+                        <p className="text-green-400 leading-none truncate w-full text-center" style={{ fontSize: '9px', minHeight: `${LABEL_H}px`, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                          {vendasPorMes[i] > 0 ? `R$${(vendasPorMes[i]/1000).toFixed(1)}k` : ''}
+                        </p>
+                        <div className="w-full bg-green-500 rounded-t transition-all" style={{ height: `${hV}px` }} />
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-end min-w-0">
+                        <p className="text-red-400 leading-none truncate w-full text-center" style={{ fontSize: '9px', minHeight: `${LABEL_H}px`, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                          {perdasPorMes[i] > 0 ? `${perdasPorMes[i].toFixed(1)}m²` : ''}
+                        </p>
+                        <div className="w-full bg-red-500 rounded-t transition-all" style={{ height: `${hP}px` }} />
+                      </div>
                     </div>
                     <p className="text-gray-400 w-full text-center truncate" style={{ fontSize: '10px' }}>{l.mes}</p>
                   </div>
