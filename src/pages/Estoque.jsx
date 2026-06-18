@@ -148,47 +148,27 @@ export default function Estoque() {
     );
     if (!confirmado) return;
 
-    await supabase.from("itens_venda").delete().eq("material_id", id);
-    await supabase.from("itens_orcamento").delete().eq("material_id", id);
-    await supabase.from("itens_pedido").delete().eq("material_id", id);
-    await supabase.from("entradas").delete().eq("material_id", id);
-    await supabase.from("perdas").delete().eq("material_id", id);
+    // Remove itens relacionados em paralelo
+    await Promise.all([
+      supabase.from("itens_venda").delete().eq("material_id", id),
+      supabase.from("itens_orcamento").delete().eq("material_id", id),
+      supabase.from("itens_pedido").delete().eq("material_id", id),
+      supabase.from("entradas").delete().eq("material_id", id),
+      supabase.from("perdas").delete().eq("material_id", id),
+    ]);
 
-    const { data: orcsVazios } = await supabase.from("orcamentos").select("id");
-    if (orcsVazios) {
-      for (const orc of orcsVazios) {
-        const { count } = await supabase
-          .from("itens_orcamento")
-          .select("id", { count: "exact", head: true })
-          .eq("orcamento_id", orc.id);
-        if (count === 0)
-          await supabase.from("orcamentos").delete().eq("id", orc.id);
-      }
-    }
-
-    const { data: vendasVazias } = await supabase.from("vendas").select("id");
-    if (vendasVazias) {
-      for (const venda of vendasVazias) {
-        const { count } = await supabase
-          .from("itens_venda")
-          .select("id", { count: "exact", head: true })
-          .eq("venda_id", venda.id);
-        if (count === 0)
-          await supabase.from("vendas").delete().eq("id", venda.id);
-      }
-    }
-
-    const { data: pedidosVazios } = await supabase.from("pedidos").select("id");
-    if (pedidosVazios) {
-      for (const pedido of pedidosVazios) {
-        const { count } = await supabase
-          .from("itens_pedido")
-          .select("id", { count: "exact", head: true })
-          .eq("pedido_id", pedido.id);
-        if (count === 0)
-          await supabase.from("pedidos").delete().eq("id", pedido.id);
-      }
-    }
+    // Remove orçamentos/vendas/pedidos que ficaram sem itens (via NOT EXISTS)
+    await Promise.all([
+      supabase.from("orcamentos").delete().not("id", "in",
+        supabase.from("itens_orcamento").select("orcamento_id")
+      ),
+      supabase.from("vendas").delete().not("id", "in",
+        supabase.from("itens_venda").select("venda_id")
+      ),
+      supabase.from("pedidos").delete().not("id", "in",
+        supabase.from("itens_pedido").select("pedido_id")
+      ),
+    ]);
 
     const { error } = await supabase.from("materiais").delete().eq("id", id);
     if (error) {

@@ -491,37 +491,44 @@ export default function Vendas() {
         return acc;
       }, {});
 
-      for (const materialId of Object.keys(qtdPorMaterial)) {
-        const qtd = qtdPorMaterial[materialId];
-        const { data: matAtual } = await supabase
-          .from("materiais")
-          .select("saldo, saidas, valor_medio")
-          .eq("id", materialId)
-          .single();
-        if (!matAtual) continue;
+      // Busca saldos frescos de todos os materiais em paralelo
+      const atualizacoes = await Promise.all(
+        Object.keys(qtdPorMaterial).map(async (materialId) => {
+          const qtd = qtdPorMaterial[materialId];
+          const { data: matAtual } = await supabase
+            .from("materiais")
+            .select("saldo, saidas, valor_medio")
+            .eq("id", materialId)
+            .single();
+          return { materialId, qtd, matAtual };
+        })
+      );
 
-        // Bloqueia se saldo for insuficiente (verificação com dado fresco do banco)
-        if (qtd > matAtual.saldo) {
-          await popup.showError(
-            `Saldo insuficiente para um dos materiais no momento do registro!\nOperação cancelada.`,
-          );
-          // Desfaz a venda inserida
-          await supabase.from("itens_venda").delete().eq("venda_id", venda.id);
-          await supabase.from("vendas").delete().eq("id", venda.id);
-          carregarDados();
-          return;
-        }
-
-        const novoSaldo = Math.max(0, (matAtual.saldo || 0) - qtd);
-        await supabase
-          .from("materiais")
-          .update({
-            saldo: novoSaldo,
-            saidas: (matAtual.saidas || 0) + qtd,
-            valor_total: (matAtual.valor_medio || 0) * novoSaldo,
-          })
-          .eq("id", materialId);
+      // Verifica saldo fresco antes de qualquer update
+      const semSaldo = atualizacoes.find(({ qtd, matAtual }) => matAtual && qtd > matAtual.saldo);
+      if (semSaldo) {
+        await popup.showError(`Saldo insuficiente para um dos materiais no momento do registro!\nOperação cancelada.`);
+        await Promise.all([
+          supabase.from("itens_venda").delete().eq("venda_id", venda.id),
+          supabase.from("vendas").delete().eq("id", venda.id),
+        ]);
+        carregarDados();
+        return;
       }
+
+      // Atualiza todos os saldos em paralelo
+      await Promise.all(
+        atualizacoes
+          .filter(({ matAtual }) => matAtual)
+          .map(({ materialId, qtd, matAtual }) => {
+            const novoSaldo = Math.max(0, (matAtual.saldo || 0) - qtd);
+            return supabase.from("materiais").update({
+              saldo: novoSaldo,
+              saidas: (matAtual.saidas || 0) + qtd,
+              valor_total: (matAtual.valor_medio || 0) * novoSaldo,
+            }).eq("id", materialId);
+          })
+      );
 
       emitirEstoqueAtualizado();
     }
