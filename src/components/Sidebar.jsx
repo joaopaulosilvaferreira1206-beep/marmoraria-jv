@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 export default function Sidebar({ onLogout, aberta, onFechar }) {
+    const [confirmarSaida, setConfirmarSaida] = useState(false)
     const [estoqueBaixo, setEstoqueBaixo] = useState(0)
     const { pode, perfil } = useAuth()
 
@@ -129,7 +130,7 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
                         </div>
                     </div>
                     <button
-                        onClick={onLogout}
+                        onClick={() => setConfirmarSaida(true)}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-red-600 hover:text-white transition-colors mt-1"
                     >
                         <LogOut size={20} />
@@ -137,6 +138,34 @@ export default function Sidebar({ onLogout, aberta, onFechar }) {
                     </button>
                 </div>
             </div>
+
+            {confirmarSaida && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-red-600/20 rounded-full">
+                                <LogOut size={20} className="text-red-400" />
+                            </div>
+                            <h2 className="text-gray-100 font-semibold text-base">Sair do aplicativo?</h2>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-6">Você será desconectado da sua conta.</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmarSaida(false)}
+                                className="flex-1 py-2.5 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 transition-colors text-sm font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={onLogout}
+                                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
+                            >
+                                Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     )
 }
