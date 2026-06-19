@@ -178,9 +178,10 @@ function BannerAtualizacao({ info, onFechar }) {
 
     if (fase === "erro_instalar")
       return (
-        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-orange-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm">Falha ao abrir instalador. Tente instalar manualmente.</span>
-          <div className="flex gap-2">
+        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-orange-600 text-white rounded-xl px-4 py-3 shadow-lg">
+          <p className="text-sm font-medium mb-1">Falha ao abrir instalador.</p>
+          <p className="text-xs text-orange-100 mb-3">Ative "Instalar apps desconhecidos" nas configurações do Android para este app e tente de novo.</p>
+          <div className="flex gap-2 justify-end">
             <button
               onClick={() => setFase("pronto")}
               className="bg-white text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
@@ -341,25 +342,34 @@ function App() {
       return 0;
     }
 
-    import("@capacitor/core").then(({ CapacitorHttp }) =>
-      CapacitorHttp.request({
-        method: "GET",
-        url: "https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest",
-        headers: { "Cache-Control": "no-cache" },
-      })
-    ).then(({ data: release }) => {
-      const nova = release.assets?.find((a) => a.name?.endsWith(".apk"));
-      if (!nova) return;
-      const match = nova.name.match(/v?(\d+\.\d+\.\d+)/);
-      const versaoNova = match ? match[1] : "";
-      if (versaoNova && compararVersao(versaoNova, __APP_VERSION__) > 0) {
-        setBannerAtualizacao({
-          plataforma: "apk",
-          versao: versaoNova,
-          url: nova.browser_download_url,
+    async function checarAtualizacao() {
+      try {
+        const { CapacitorHttp } = await import("@capacitor/core");
+        const { data: release } = await CapacitorHttp.request({
+          method: "GET",
+          url: "https://api.github.com/repos/joaopaulosilvaferreira1206-beep/marmoraria-jv/releases/tags/latest",
+          headers: { "Cache-Control": "no-cache" },
         });
+        const nova = release.assets?.find((a) => a.name?.endsWith(".apk"));
+        if (!nova) return;
+        const match = nova.name.match(/v?(\d+\.\d+\.\d+)/);
+        const versaoNova = match ? match[1] : "";
+        if (versaoNova && compararVersao(versaoNova, __APP_VERSION__) > 0) {
+          setBannerAtualizacao({
+            plataforma: "apk",
+            versao: versaoNova,
+            url: nova.browser_download_url,
+          });
+        }
+      } catch {
+        // silencioso — retry automático quando internet voltar
       }
-    }).catch(() => {});
+    }
+
+    checarAtualizacao();
+    // Retry quando internet voltar (dispositivo pode ter aberto offline)
+    window.addEventListener("online", checarAtualizacao);
+    return () => window.removeEventListener("online", checarAtualizacao);
   }, []);
 
   // Verificação de atualização para PC (Electron via IPC)
