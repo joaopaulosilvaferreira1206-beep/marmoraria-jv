@@ -100,7 +100,8 @@ function Layout({ onLogout }) {
 }
 
 function BannerAtualizacao({ info, onFechar }) {
-  const [fase, setFase] = useState("disponivel"); // disponivel | baixando | pronto | erro
+  // erro_download = falhou ao baixar | erro_instalar = arquivo ok, mas install falhou
+  const [fase, setFase] = useState("disponivel");
   const [progresso, setProgresso] = useState(0);
 
   async function baixarApk() {
@@ -116,7 +117,6 @@ function BannerAtualizacao({ info, onFechar }) {
           setProgresso(Math.round((evt.bytes / evt.contentLength) * 100));
       });
 
-      // downloadFile: stream direto para disco, segue redirects (GitHub → CDN)
       await Filesystem.downloadFile({
         url: info.url,
         path: "update.apk",
@@ -127,7 +127,7 @@ function BannerAtualizacao({ info, onFechar }) {
       setProgresso(100);
       setFase("pronto");
     } catch {
-      setFase("erro");
+      setFase("erro_download");
     } finally {
       listener?.remove();
     }
@@ -146,7 +146,7 @@ function BannerAtualizacao({ info, onFechar }) {
         mimeType: "application/vnd.android.package-archive",
       });
     } catch {
-      setFase("erro");
+      setFase("erro_instalar");
     }
   }
 
@@ -160,14 +160,30 @@ function BannerAtualizacao({ info, onFechar }) {
   );
 
   if (info.plataforma === "apk") {
-    if (fase === "erro")
+    if (fase === "erro_download")
       return (
         <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-red-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm">Falha no download. Tente novamente.</span>
+          <span className="text-sm">Falha no download. Verifique sua conexão.</span>
           <div className="flex gap-2">
             <button
               onClick={() => setFase("disponivel")}
               className="bg-white text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
+            >
+              Tentar de novo
+            </button>
+            {btnFechar}
+          </div>
+        </div>
+      );
+
+    if (fase === "erro_instalar")
+      return (
+        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-orange-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
+          <span className="text-sm">Falha ao abrir instalador. Tente instalar manualmente.</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFase("pronto")}
+              className="bg-white text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
             >
               Tentar de novo
             </button>
