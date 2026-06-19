@@ -104,35 +104,33 @@ function BannerAtualizacao({ info, onFechar }) {
   const [progresso, setProgresso] = useState(0);
 
   async function baixarApk() {
-    const { Filesystem, Directory } = await import("@capacitor/filesystem");
-    const { CapacitorHttp } = await import("@capacitor/core");
-
     setFase("baixando");
     setProgresso(0);
 
+    let listener;
     try {
-      // CapacitorHttp faz o request fora do WebView — sem restrição de CORS
-      const resp = await CapacitorHttp.request({
-        method: "GET",
-        url: info.url,
-        responseType: "blob",
+      const { Filesystem, Directory } = await import("@capacitor/filesystem");
+
+      listener = await Filesystem.addListener("progress", (evt) => {
+        if (evt.contentLength > 0)
+          setProgresso(Math.round((evt.bytes / evt.contentLength) * 100));
       });
 
-      if (resp.status < 200 || resp.status >= 300) {
-        throw new Error(`HTTP ${resp.status}`);
-      }
-
-      setProgresso(100);
-
-      // resp.data já é base64 quando responseType é 'blob'
-      await Filesystem.writeFile({
+      // downloadFile: stream direto para disco, segue redirects (GitHub → CDN)
+      await Filesystem.downloadFile({
+        url: info.url,
         path: "update.apk",
         directory: Directory.Cache,
-        data: resp.data,
+        progress: true,
+        recursive: true,
       });
+
+      setProgresso(100);
       setFase("pronto");
     } catch {
       setFase("erro");
+    } finally {
+      listener?.remove();
     }
   }
 
