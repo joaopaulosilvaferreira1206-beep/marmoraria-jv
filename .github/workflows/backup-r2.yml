@@ -23,18 +23,22 @@ jobs:
         run: |
           node - <<'EOF'
           const https  = require('https')
-          const fs     = require('fs')
           const { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3')
 
           const TABELAS = [
             'fornecedores','clientes','materiais',
-            'vendas','itens_venda','orcamentos','itens_orcamento',
-            'pedidos','entradas','perdas'
+            'vendas','itens_venda',
+            'orcamentos','itens_orcamento',
+            'pedidos','itens_pedido',
+            'entradas','perdas',
           ]
 
-          function buscar(tabela) {
+          function buscar(tabela, page = 0) {
+            const PAGE = 1000
             return new Promise((resolve, reject) => {
               const url  = new URL(`/rest/v1/${tabela}?select=*`, process.env.SUPABASE_URL)
+              const from = page * PAGE
+              const to   = from + PAGE - 1
               const opts = {
                 hostname: url.hostname,
                 path: url.pathname + url.search,
@@ -42,23 +46,46 @@ jobs:
                   apikey: process.env.SUPABASE_SERVICE_KEY.trim(),
                   Authorization: `Bearer ${process.env.SUPABASE_SERVICE_KEY.trim()}`,
                   'Range-Unit': 'items',
-                  Range: '0-9999',
+                  Range: `${from}-${to}`,
+                  Prefer: 'count=none',
                 },
               }
               https.get(opts, res => {
                 let body = ''
                 res.on('data', d => body += d)
-                res.on('end', () => resolve(JSON.parse(body)))
+                res.on('end', () => {
+                  if (res.statusCode < 200 || res.statusCode >= 300) {
+                    reject(new Error(`HTTP ${res.statusCode} em ${tabela}: ${body.slice(0, 200)}`))
+                    return
+                  }
+                  const parsed = JSON.parse(body)
+                  if (!Array.isArray(parsed)) {
+                    reject(new Error(`Resposta inválida em ${tabela}: ${body.slice(0, 200)}`))
+                    return
+                  }
+                  resolve(parsed)
+                })
               }).on('error', reject)
             })
           }
 
+          async function buscarTudo(tabela) {
+            const PAGE = 1000
+            let todos = [], page = 0, pagina
+            do {
+              pagina = await buscar(tabela, page++)
+              todos = todos.concat(pagina)
+            } while (pagina.length === PAGE)
+            return todos
+          }
+
           ;(async () => {
-            // 1. Coletar dados
+            // 1. Coletar dados de todas as tabelas em paralelo
+            const resultados = await Promise.all(TABELAS.map(t => buscarTudo(t).then(d => [t, d])))
             const dados = { _gerado_em: new Date().toISOString() }
-            for (const t of TABELAS) {
-              dados[t] = await buscar(t)
-              console.log(`  ${t}: ${dados[t].length} registros`)
+            for (const [t, d] of resultados) {
+              dados[t] = d
+              console.log(`  ${t}: ${d.length} registros`)
             }
 
             // 2. Nome do arquivo

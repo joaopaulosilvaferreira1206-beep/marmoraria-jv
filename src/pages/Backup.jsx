@@ -181,7 +181,7 @@ export default function Backup() {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-100">Backup e Restauração</h1>
-                    <p className="text-gray-400 mt-1">Backup automático diário às 03h — salvo na nuvem.</p>
+                    <p className="text-gray-400 mt-1">Backup automático a cada 3 horas — salvo na nuvem.</p>
                 </div>
                 <button
                     onClick={handleBackupManual}

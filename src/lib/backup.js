@@ -14,14 +14,25 @@ const TABELAS = [
     'itens_orcamento',
 ]
 
+const ORDEM_INSERCAO = [
+    'fornecedores', 'clientes', 'materiais',
+    'vendas', 'orcamentos', 'pedidos',
+    'entradas', 'perdas',
+    'itens_venda', 'itens_orcamento', 'itens_pedido',
+]
+
+const ORDEM_DELECAO = [...ORDEM_INSERCAO].reverse()
+
+async function buscarTabela(tabela) {
+    const { data, error } = await supabase.from(tabela).select('*')
+    if (error) throw new Error(`Erro ao ler ${tabela}: ${error.message}`)
+    return data ?? []
+}
+
 async function coletarDados() {
-    const dados = {}
-    for (const tabela of TABELAS) {
-        const { data, error } = await supabase.from(tabela).select('*')
-        if (error) throw error
-        dados[tabela] = data
-    }
-    dados._gerado_em = new Date().toISOString()
+    const resultados = await Promise.all(TABELAS.map(t => buscarTabela(t).then(d => [t, d])))
+    const dados = { _gerado_em: new Date().toISOString() }
+    for (const [t, d] of resultados) dados[t] = d
     return dados
 }
 
@@ -31,10 +42,8 @@ export async function gerarBackup() {
         if (window.electronAPI) {
             return await window.electronAPI.salvarBackup(dados)
         }
-        // Nuvem: salva no Supabase
         const { error } = await supabase.from('backups_nuvem').insert({ dados })
         if (error) throw error
-        // Manter só os 30 mais recentes
         const { data: lista } = await supabase
             .from('backups_nuvem')
             .select('id, criado_em')
@@ -88,14 +97,7 @@ export async function carregarDadosBackup(origem) {
     return data.dados
 }
 
-// registrosPorTabela: { clientes: [rec, ...], materiais: [rec, ...], ... }
 export async function restaurarSeletivo(registrosPorTabela) {
-    const ORDEM_INSERCAO = [
-        'fornecedores', 'clientes', 'materiais',
-        'vendas', 'orcamentos', 'pedidos',
-        'entradas', 'perdas',
-        'itens_venda', 'itens_orcamento', 'itens_pedido',
-    ]
     try {
         for (const tabela of ORDEM_INSERCAO) {
             const registros = registrosPorTabela[tabela]
@@ -122,26 +124,23 @@ export async function restaurarBackup(caminho) {
 }
 
 async function restaurarDados(dados) {
+    const tabelasValidas = TABELAS.filter(t => Array.isArray(dados[t]))
+    if (tabelasValidas.length === 0) {
+        return { ok: false, erro: 'Backup inválido: nenhuma tabela reconhecida.' }
+    }
+
     try {
-        const ordemDelecao = [
-            'itens_venda', 'itens_orcamento', 'itens_pedido',
-            'vendas', 'orcamentos', 'pedidos',
-            'entradas', 'perdas', 'materiais', 'clientes', 'fornecedores',
-        ]
-        for (const tabela of ordemDelecao) {
-            await supabase.from(tabela).delete().neq('id', '00000000-0000-0000-0000-000000000000')
+        for (const tabela of ORDEM_DELECAO) {
+            const { error } = await supabase
+                .from(tabela)
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000')
+            if (error) throw new Error(`Erro ao limpar ${tabela}: ${error.message}`)
         }
-        const ordemInsercao = [
-            'fornecedores', 'clientes', 'materiais',
-            'vendas', 'orcamentos', 'pedidos',
-            'entradas', 'perdas',
-            'itens_venda', 'itens_orcamento', 'itens_pedido',
-        ]
-        for (const tabela of ordemInsercao) {
-            if (dados[tabela]?.length > 0) {
-                const { error } = await supabase.from(tabela).insert(dados[tabela])
-                if (error) throw error
-            }
+        for (const tabela of ORDEM_INSERCAO) {
+            if (!dados[tabela]?.length) continue
+            const { error } = await supabase.from(tabela).insert(dados[tabela])
+            if (error) throw new Error(`Erro ao restaurar ${tabela}: ${error.message}`)
         }
         return { ok: true }
     } catch (e) {
