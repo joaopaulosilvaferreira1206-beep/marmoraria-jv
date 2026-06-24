@@ -100,56 +100,6 @@ function Layout({ onLogout }) {
 }
 
 function BannerAtualizacao({ info, onFechar }) {
-  // erro_download = falhou ao baixar | erro_instalar = arquivo ok, mas install falhou
-  const [fase, setFase] = useState("disponivel");
-  const [progresso, setProgresso] = useState(0);
-
-  async function baixarApk() {
-    setFase("baixando");
-    setProgresso(0);
-
-    let listener;
-    try {
-      const { Filesystem, Directory } = await import("@capacitor/filesystem");
-
-      listener = await Filesystem.addListener("progress", (evt) => {
-        if (evt.contentLength > 0)
-          setProgresso(Math.round((evt.bytes / evt.contentLength) * 100));
-      });
-
-      await Filesystem.downloadFile({
-        url: info.url,
-        path: "update.apk",
-        directory: Directory.Cache,
-        progress: true,
-      });
-
-      setProgresso(100);
-      setFase("pronto");
-    } catch {
-      setFase("erro_download");
-    } finally {
-      listener?.remove();
-    }
-  }
-
-  async function instalarApk() {
-    try {
-      const { Filesystem, Directory } = await import("@capacitor/filesystem");
-      const { FileOpener } = await import("@capawesome-team/capacitor-file-opener");
-      const { uri } = await Filesystem.getUri({
-        path: "update.apk",
-        directory: Directory.Cache,
-      });
-      await FileOpener.openFile({
-        path: uri,
-        mimeType: "application/vnd.android.package-archive",
-      });
-    } catch {
-      setFase("erro_instalar");
-    }
-  }
-
   const btnFechar = (
     <button
       onClick={onFechar}
@@ -159,74 +109,9 @@ function BannerAtualizacao({ info, onFechar }) {
     </button>
   );
 
+  // Android: abre o navegador externo para baixar o APK direto do GitHub.
+  // O download in-app com barra de progresso falhava em alguns aparelhos.
   if (info.plataforma === "apk") {
-    if (fase === "erro_download")
-      return (
-        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-red-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm">Falha no download. Verifique sua conexão.</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFase("disponivel")}
-              className="bg-white text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            >
-              Tentar de novo
-            </button>
-            {btnFechar}
-          </div>
-        </div>
-      );
-
-    if (fase === "erro_instalar")
-      return (
-        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-orange-600 text-white rounded-xl px-4 py-3 shadow-lg">
-          <p className="text-sm font-medium mb-1">Falha ao abrir instalador.</p>
-          <p className="text-xs text-orange-100 mb-3">Ative "Instalar apps desconhecidos" nas configurações do Android para este app e tente de novo.</p>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setFase("pronto")}
-              className="bg-white text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            >
-              Tentar de novo
-            </button>
-            {btnFechar}
-          </div>
-        </div>
-      );
-
-    if (fase === "baixando")
-      return (
-        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-700 text-white rounded-xl px-4 py-3 shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">
-              Baixando versão {info.versao}…
-            </span>
-            <span className="text-xs text-blue-200">{progresso}%</span>
-          </div>
-          <div className="w-full bg-blue-900 rounded-full h-2">
-            <div
-              className="bg-white rounded-full h-2 transition-all duration-200"
-              style={{ width: `${progresso}%` }}
-            />
-          </div>
-        </div>
-      );
-
-    if (fase === "pronto")
-      return (
-        <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-green-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm font-medium">Download concluído!</span>
-          <div className="flex gap-2">
-            <button
-              onClick={instalarApk}
-              className="bg-white text-green-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            >
-              Instalar agora
-            </button>
-            {btnFechar}
-          </div>
-        </div>
-      );
-
     return (
       <div className="fixed bottom-4 left-4 right-4 z-[9999] bg-blue-600 text-white rounded-xl px-4 py-3 flex items-center justify-between shadow-lg">
         <span className="text-sm font-medium">
@@ -234,10 +119,10 @@ function BannerAtualizacao({ info, onFechar }) {
         </span>
         <div className="flex gap-2">
           <button
-            onClick={baixarApk}
+            onClick={() => window.open(info.url, "_blank")}
             className="bg-white text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg"
           >
-            Baixar
+            Baixar atualização
           </button>
           {btnFechar}
         </div>
