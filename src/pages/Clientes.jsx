@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { usePopup } from "../components/PopupProvider";
@@ -13,12 +13,12 @@ const clienteVazio = {
   endereco: "",
 };
 
-export default function Clientes() {
+export default function Clientes({ onlyModal, onClose, onSuccess }) {
   const { pode } = useAuth();
   const popup = usePopup();
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(onlyModal || false);
   const [form, setForm] = useState(clienteVazio);
   const [editando, setEditando] = useState(null);
   const { itemDestacado } = useBusca();
@@ -65,7 +65,18 @@ export default function Clientes() {
     setModal(false);
     setForm(clienteVazio);
     setEditando(null);
-    carregarClientes();
+    if (onlyModal) {
+      onSuccess();
+    } else {
+      carregarClientes();
+    }
+  }
+
+  function fecharModal() {
+    setModal(false);
+    setForm(clienteVazio);
+    setEditando(null);
+    if (onlyModal && onClose) onClose();
   }
 
   async function excluir(id) {
@@ -124,7 +135,9 @@ export default function Clientes() {
   const filtrados = clientes
 
   return (
-    <div className="space-y-4">
+    <div className={onlyModal ? "" : "space-y-4"}>
+      {!onlyModal && (
+        <>
       <div className="flex gap-2 justify-end">
         <button
           onClick={() => exportarClientesPDF(clientes)}
@@ -230,6 +243,8 @@ export default function Clientes() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {/* Modal Cadastro/Edição */}
       {modal && (
@@ -240,7 +255,7 @@ export default function Clientes() {
                 {editando ? "Editar Cliente" : "Novo Cliente"}
               </h3>
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="text-gray-400 hover:text-gray-200"
               >
                 <X size={20} />
@@ -295,7 +310,7 @@ export default function Clientes() {
             </div>
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="flex-1 border border-gray-600 text-gray-300 py-2 rounded-lg hover:bg-gray-700"
               >
                 Cancelar

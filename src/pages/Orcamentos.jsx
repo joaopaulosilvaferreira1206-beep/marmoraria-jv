@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   Plus,
@@ -370,13 +370,13 @@ function FormItens({
   );
 }
 
-export default function Orcamentos() {
+export default function Orcamentos({ onlyModal, onClose, onSuccess }) {
   const popup = usePopup();
   const [orcamentos, setOrcamentos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(onlyModal || false);
   const [modalEditar, setModalEditar] = useState(false);
   const [orcamentoEditando, setOrcamentoEditando] = useState(null);
   const [modalCliente, setModalCliente] = useState(false);
@@ -623,7 +623,18 @@ export default function Orcamentos() {
     setForm(orcamentoVazio);
     setItens([]);
     popup.showSuccess("Orçamento salvo com sucesso!");
-    carregarDados();
+    if (onlyModal) {
+      onSuccess();
+    } else {
+      carregarDados();
+    }
+  }
+
+  function fecharModal() {
+    setModal(false);
+    setForm(orcamentoVazio);
+    setItens([]);
+    if (onlyModal && onClose) onClose();
   }
 
   async function atualizarStatus(id, status) {
@@ -692,7 +703,9 @@ export default function Orcamentos() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={onlyModal ? "" : "space-y-4"}>
+      {!onlyModal && (
+        <>
       {/* Alertas de validade */}
       {(orcamentosVencendo.length > 0 || orcamentosVencidos.length > 0) && (
         <div className="space-y-2">
@@ -929,6 +942,8 @@ export default function Orcamentos() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {/* Modal Novo Orçamento */}
       {modal && (
@@ -939,7 +954,7 @@ export default function Orcamentos() {
                 Novo Orçamento
               </h3>
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="text-gray-400 hover:text-gray-200"
               >
                 <X size={20} />
@@ -966,7 +981,7 @@ export default function Orcamentos() {
             </div>
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="flex-1 border border-gray-600 text-gray-400 py-2 rounded-lg hover:bg-gray-700 transition"
               >
                 Cancelar

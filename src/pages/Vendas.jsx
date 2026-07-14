@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { formatarDataHora } from "../lib/formatarData";
 import { Plus, X, Trash2, Layers } from "lucide-react";
@@ -296,7 +296,7 @@ function FormItensVenda({
 // ─────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────
-export default function Vendas() {
+export default function Vendas({ onlyModal, onClose, onSuccess }) {
   const { pode } = useAuth();
   const popup = usePopup();
   const [vendas, setVendas] = useState([]);
@@ -304,7 +304,7 @@ export default function Vendas() {
   const [clientes, setClientes] = useState([]);
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(onlyModal || false);
   const [modalCliente, setModalCliente] = useState(false);
   const [formCliente, setFormCliente] = useState({
     nome: "",
@@ -536,11 +536,24 @@ export default function Vendas() {
     setModal(false);
     setForm(vendaVazia);
     setItens([]);
-    carregarDados();
+    if (onlyModal) {
+      onSuccess();
+    } else {
+      carregarDados();
+    }
+  }
+
+  function fecharModal() {
+    setModal(false);
+    setForm(vendaVazia);
+    setItens([]);
+    if (onlyModal && onClose) onClose();
   }
 
   return (
-    <div className="space-y-4">
+    <div className={onlyModal ? "" : "space-y-4"}>
+      {!onlyModal && (
+        <>
       <div className="flex justify-end">
         <button
           onClick={() => {
@@ -656,6 +669,8 @@ export default function Vendas() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {/* Modal Nova Venda */}
       {modal && (
@@ -666,7 +681,7 @@ export default function Vendas() {
                 Nova Venda
               </h3>
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="text-gray-400 hover:text-gray-200"
               >
                 <X size={20} />
@@ -759,7 +774,7 @@ export default function Vendas() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setModal(false)}
+                onClick={fecharModal}
                 className="flex-1 border border-gray-600 text-gray-400 py-2 rounded-lg hover:bg-gray-700 transition"
               >
                 Cancelar

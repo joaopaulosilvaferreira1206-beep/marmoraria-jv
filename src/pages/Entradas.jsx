@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatarDataHora } from '../lib/formatarData'
 import { Plus, X, Image } from 'lucide-react'
@@ -6,13 +6,13 @@ import { usePopup } from '../components/PopupProvider'
 import { emitirEstoqueAtualizado } from '../lib/estoqueEvents'
 import SelectBusca from '../components/SelectBusca'
 
-export default function Entradas() {
+export default function Entradas({ onlyModal, onClose, onSuccess }) {
     const popup = usePopup()
     const [entradas, setEntradas] = useState([])
     const [materiais, setMateriais] = useState([])
     const [fornecedores, setFornecedores] = useState([])
     const [loading, setLoading] = useState(true)
-    const [modal, setModal] = useState(false)
+    const [modal, setModal] = useState(onlyModal || false)
     const [modalMaterial, setModalMaterial] = useState(false)
     const [modalFornecedor, setModalFornecedor] = useState(false)
     const [formMaterial, setFormMaterial] = useState({ descricao: '', minimo: '', maximo: '', unidade: 'M²' })
@@ -194,12 +194,22 @@ export default function Entradas() {
             data: new Date().toISOString().split('T')[0],
             observacao: '',
         })
-        carregarDados()
+        if (onlyModal) {
+            onSuccess()
+        } else {
+            carregarDados()
+        }
     }
 
+    function fecharModal() {
+        setModal(false)
+        if (onlyModal && onClose) onClose()
+    }
 
     return (
-        <div className="space-y-4">
+        <div className={onlyModal ? "" : "space-y-4"}>
+            {!onlyModal && (
+                <>
             <div className="flex justify-end">
                 <button
                     onClick={() => setModal(true)}
@@ -243,6 +253,8 @@ export default function Entradas() {
                     </tbody>
                 </table>
             </div>
+                </>
+            )}
 
             {/* Modal Registrar Entrada */}
             {modal && (
@@ -250,7 +262,7 @@ export default function Entradas() {
                     <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto my-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Registrar Entrada</h3>
-                            <button onClick={() => setModal(false)} className="text-gray-400 hover:text-gray-200"><X size={20} /></button>
+                            <button onClick={fecharModal} className="text-gray-400 hover:text-gray-200"><X size={20} /></button>
                         </div>
                         <div className="space-y-3">
                             <div>
@@ -321,7 +333,7 @@ export default function Entradas() {
                             </div>
                         </div>
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setModal(false)}
+                            <button onClick={fecharModal}
                                 className="flex-1 border border-gray-600 text-gray-400 py-2 rounded-lg hover:bg-gray-700 transition">
                                 Cancelar
                             </button>

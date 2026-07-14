@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
   Package,
@@ -7,9 +8,18 @@ import {
   ShoppingCart,
   FileText,
   DollarSign,
+  ArrowDownCircle,
+  Users,
+  Zap,
 } from "lucide-react";
+import Orcamentos from "./Orcamentos";
+import Vendas from "./Vendas";
+import Entradas from "./Entradas";
+import Clientes from "./Clientes";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [activeModal, setActiveModal] = useState(null);
   const [resumo, setResumo] = useState({
     totalMateriais: 0,
     valorEstoque: 0,
@@ -18,7 +28,6 @@ export default function Dashboard() {
     vendasMes: 0,
     orcamentosPendentes: 0,
   });
-  const [alertas, setAlertas] = useState([]);
   const [vendasRecentes, setVendasRecentes] = useState([]);
   const [vendasPorMes, setVendasPorMes] = useState([]);
   const [perdasPorMes, setPerdasPorMes] = useState([]);
@@ -63,7 +72,6 @@ export default function Dashboard() {
       .toISOString()
       .split("T")[0];
     const inicio5Meses = new Date(anoAtual, mesAtual - 4, 1).toISOString().split("T")[0];
-    const inicioAno = new Date(anoAtual, 0, 1).toISOString().split("T")[0];
 
     const [
       { data: materiais },
@@ -114,7 +122,6 @@ export default function Dashboard() {
         vendasMes,
         orcamentosPendentes: orcamentos?.length || 0,
       });
-      setAlertas(estoqueBaixo.slice(0, 5));
     }
 
     // Agrupa vendas e perdas por mês (últimos 5 meses)
@@ -309,7 +316,114 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Atalhos Rápidos */}
+        <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700 flex flex-col justify-between">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+              <Zap size={20} className="text-amber-400 fill-amber-400/20" />
+              Atalhos Rápidos
+            </h3>
+            <p className="text-sm text-gray-400 mt-1">
+              Acesso rápido às principais ações do sistema.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 flex-1">
+            <button
+              onClick={() => setActiveModal("orcamento")}
+              className="group flex flex-col items-center justify-center p-4 bg-gray-700/30 hover:bg-gray-700/60 rounded-xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 gap-3 text-center cursor-pointer active:scale-95"
+            >
+              <div className="p-3 bg-blue-500/10 text-blue-400 rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-inner">
+                <FileText size={24} />
+              </div>
+              <span className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
+                Novo Orçamento
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveModal("venda")}
+              className="group flex flex-col items-center justify-center p-4 bg-gray-700/30 hover:bg-gray-700/60 rounded-xl border border-gray-700 hover:border-green-500/50 transition-all duration-300 gap-3 text-center cursor-pointer active:scale-95"
+            >
+              <div className="p-3 bg-green-500/10 text-green-400 rounded-lg group-hover:bg-green-500 group-hover:text-white transition-all duration-300 shadow-inner">
+                <ShoppingCart size={24} />
+              </div>
+              <span className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
+                Registrar Venda
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveModal("entrada")}
+              className="group flex flex-col items-center justify-center p-4 bg-gray-700/30 hover:bg-gray-700/60 rounded-xl border border-gray-700 hover:border-purple-500/50 transition-all duration-300 gap-3 text-center cursor-pointer active:scale-95"
+            >
+              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-lg group-hover:bg-purple-500 group-hover:text-white transition-all duration-300 shadow-inner">
+                <ArrowDownCircle size={24} />
+              </div>
+              <span className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
+                Dar Entrada
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveModal("cliente")}
+              className="group flex flex-col items-center justify-center p-4 bg-gray-700/30 hover:bg-gray-700/60 rounded-xl border border-gray-700 hover:border-orange-500/50 transition-all duration-300 gap-3 text-center cursor-pointer active:scale-95"
+            >
+              <div className="p-3 bg-orange-500/10 text-orange-400 rounded-lg group-hover:bg-orange-500 group-hover:text-white transition-all duration-300 shadow-inner">
+                <Users size={24} />
+              </div>
+              <span className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
+                Cadastrar Cliente
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {activeModal === "orcamento" && (
+        <Orcamentos
+          onlyModal={true}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            setActiveModal(null);
+            navigate("/orcamentos");
+          }}
+        />
+      )}
+
+      {activeModal === "venda" && (
+        <Vendas
+          onlyModal={true}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            setActiveModal(null);
+            navigate("/vendas");
+          }}
+        />
+      )}
+
+      {activeModal === "entrada" && (
+        <Entradas
+          onlyModal={true}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            setActiveModal(null);
+            navigate("/entradas");
+          }}
+        />
+      )}
+
+      {activeModal === "cliente" && (
+        <Clientes
+          onlyModal={true}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            setActiveModal(null);
+            navigate("/clientes");
+          }}
+        />
+      )}
     </div>
   );
 }
