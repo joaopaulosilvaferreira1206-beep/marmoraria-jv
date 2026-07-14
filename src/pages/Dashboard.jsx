@@ -71,7 +71,9 @@ export default function Dashboard() {
     const inicioMes = new Date(anoAtual, mesAtual, 1)
       .toISOString()
       .split("T")[0];
-    const inicio5Meses = new Date(anoAtual, mesAtual - 4, 1).toISOString().split("T")[0];
+    const inicio5Meses = new Date(anoAtual, mesAtual - 4, 1)
+      .toISOString()
+      .split("T")[0];
 
     const [
       { data: materiais },
@@ -105,8 +107,8 @@ export default function Dashboard() {
       );
       const vendasMes = (vendasAno || [])
         .filter((v) => {
-          const d = new Date(v.data + 'T00:00:00')
-          return d.getFullYear() === anoAtual && d.getMonth() === mesAtual
+          const d = new Date(v.data + "T00:00:00");
+          return d.getFullYear() === anoAtual && d.getMonth() === mesAtual;
         })
         .reduce((acc, v) => acc + (v.valor_total || 0), 0);
 
@@ -126,7 +128,20 @@ export default function Dashboard() {
 
     // Agrupa vendas e perdas por mês (últimos 5 meses)
     {
-      const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+      const nomes = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Abr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Set",
+        "Out",
+        "Nov",
+        "Dez",
+      ];
       const labels = [];
       const vendasGrp = {};
       const perdasGrp = {};
@@ -138,18 +153,18 @@ export default function Dashboard() {
         labels.push({ chave, mes: nomes[d.getMonth()] });
       }
       (vendasAno || []).forEach((v) => {
-        const [ano, mes] = v.data.split('-').map(Number);
+        const [ano, mes] = v.data.split("-").map(Number);
         const chave = `${ano}-${mes - 1}`;
         if (chave in vendasGrp) vendasGrp[chave] += v.valor_total || 0;
       });
       (perdasAno || []).forEach((p) => {
-        const [ano, mes] = p.data.split('-').map(Number);
+        const [ano, mes] = p.data.split("-").map(Number);
         const chave = `${ano}-${mes - 1}`;
         if (chave in perdasGrp) perdasGrp[chave] += p.quantidade || 0;
       });
       setMesMeses(labels);
-      setVendasPorMes(labels.map(l => vendasGrp[l.chave]));
-      setPerdasPorMes(labels.map(l => perdasGrp[l.chave]));
+      setVendasPorMes(labels.map((l) => vendasGrp[l.chave]));
+      setPerdasPorMes(labels.map((l) => perdasGrp[l.chave]));
     }
 
     if (vendas) setVendasRecentes(vendas);
@@ -195,7 +210,6 @@ export default function Dashboard() {
     },
   ];
 
-
   if (loading)
     return (
       <div className="flex items-center justify-center h-64">
@@ -231,8 +245,14 @@ export default function Dashboard() {
             Vendas × Perdas (últimos 5 meses)
           </h3>
           <div className="flex items-center gap-4 text-xs text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> Ganho (R$)</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> Perda (m²)</span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-sm bg-green-500 inline-block" />{" "}
+              Ganho (R$)
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" />{" "}
+              Perda (m²)
+            </span>
           </div>
         </div>
         {(() => {
@@ -243,25 +263,74 @@ export default function Dashboard() {
           return (
             <div className="flex items-end gap-1 w-full">
               {mesMeses.map((l, i) => {
-                const hV = Math.round(Math.max((vendasPorMes[i] / maxV) * BAR_H, vendasPorMes[i] > 0 ? 4 : 0));
-                const hP = Math.round(Math.max((perdasPorMes[i] / maxP) * BAR_H, perdasPorMes[i] > 0 ? 4 : 0));
+                const hV = Math.round(
+                  Math.max(
+                    (vendasPorMes[i] / maxV) * BAR_H,
+                    vendasPorMes[i] > 0 ? 4 : 0,
+                  ),
+                );
+                const hP = Math.round(
+                  Math.max(
+                    (perdasPorMes[i] / maxP) * BAR_H,
+                    perdasPorMes[i] > 0 ? 4 : 0,
+                  ),
+                );
                 return (
-                  <div key={l.chave} className="flex-1 flex flex-col items-center gap-0.5 min-w-0">
-                    <div className="w-full flex items-end gap-0.5" style={{ height: `${BAR_H + LABEL_H}px` }}>
+                  <div
+                    key={l.chave}
+                    className="flex-1 flex flex-col items-center gap-0.5 min-w-0"
+                  >
+                    <div
+                      className="w-full flex items-end gap-0.5"
+                      style={{ height: `${BAR_H + LABEL_H}px` }}
+                    >
                       <div className="flex-1 flex flex-col items-center justify-end min-w-0">
-                        <p className="text-green-400 leading-none truncate w-full text-center" style={{ fontSize: '9px', minHeight: `${LABEL_H}px`, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                          {vendasPorMes[i] > 0 ? `R$${(vendasPorMes[i]/1000).toFixed(1)}k` : ''}
+                        <p
+                          className="text-green-400 leading-none truncate w-full text-center"
+                          style={{
+                            fontSize: "9px",
+                            minHeight: `${LABEL_H}px`,
+                            display: "flex",
+                            alignItems: "flex-end",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {vendasPorMes[i] > 0
+                            ? `R$${(vendasPorMes[i] / 1000).toFixed(1)}k`
+                            : ""}
                         </p>
-                        <div className="w-full bg-green-500 rounded-t transition-all" style={{ height: `${hV}px` }} />
+                        <div
+                          className="w-full bg-green-500 rounded-t transition-all"
+                          style={{ height: `${hV}px` }}
+                        />
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-end min-w-0">
-                        <p className="text-red-400 leading-none truncate w-full text-center" style={{ fontSize: '9px', minHeight: `${LABEL_H}px`, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                          {perdasPorMes[i] > 0 ? `${perdasPorMes[i].toFixed(1)}m²` : ''}
+                        <p
+                          className="text-red-400 leading-none truncate w-full text-center"
+                          style={{
+                            fontSize: "9px",
+                            minHeight: `${LABEL_H}px`,
+                            display: "flex",
+                            alignItems: "flex-end",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {perdasPorMes[i] > 0
+                            ? `${perdasPorMes[i].toFixed(1)}m²`
+                            : ""}
                         </p>
-                        <div className="w-full bg-red-500 rounded-t transition-all" style={{ height: `${hP}px` }} />
+                        <div
+                          className="w-full bg-red-500 rounded-t transition-all"
+                          style={{ height: `${hP}px` }}
+                        />
                       </div>
                     </div>
-                    <p className="text-gray-400 w-full text-center truncate" style={{ fontSize: '10px' }}>{l.mes}</p>
+                    <p
+                      className="text-gray-400 w-full text-center truncate"
+                      style={{ fontSize: "10px" }}
+                    >
+                      {l.mes}
+                    </p>
                   </div>
                 );
               })}
@@ -271,7 +340,6 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* Vendas recentes */}
         <div className="bg-gray-800 rounded-xl shadow p-5 border border-gray-700">
           <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
@@ -322,7 +390,7 @@ export default function Dashboard() {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
               <Zap size={20} className="text-amber-400 fill-amber-400/20" />
-              Atalhos Rápidos
+              Atalhos
             </h3>
             <p className="text-sm text-gray-400 mt-1">
               Acesso rápido às principais ações do sistema.
